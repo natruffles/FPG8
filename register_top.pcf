@@ -1,0 +1,15 @@
+# Oscillator
+set_io              clk     21
+
+# LEDs
+set_io              led[0]  99
+set_io              led[1]  98
+set_io              led[2]  97
+set_io              led[3]  96
+set_io              led[4]  95
+
+# PMOD I/O
+set_io  -pullup yes b1 78
+set_io  -pullup yes b2 79
+set_io  -pullup yes b3 80
+set_io  -pullup yes b4 81
