@@ -32,6 +32,88 @@ register register_inst0 (
     .enable(enable)  
 );
 
+register GPR (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(GPR_reg_out),  
+    .latch(GPR_latch), 
+    .enable(GPR_enable)  
+);
+
+register MDR (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(MDR_reg_out),  
+    .latch(MDR_latch), 
+    .enable(MDR_enable)  
+);
+
+register IR (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(IR_reg_out),  
+    .latch(IR_latch), 
+    .enable(IR_enable)  
+);
+
+register timer (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(timer_reg_out),  
+    .latch(timer_latch), 
+    .enable(timer_enable)  
+);
+
+register conrom (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(conrom_reg_out),  
+    .latch(conrom_latch), 
+    .enable(conrom_enable)  
+);
+
+register MAR (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(MAR_reg_out),  
+    .latch(MAR_latch), 
+    .enable(MAR_enable)  
+);
+
+register Y (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(Y_reg_out),  
+    .latch(Y_latch), 
+    .enable(Y_enable)  
+);
+
+register Z (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(Z_reg_out),  
+    .latch(Z_latch), 
+    .enable(Z_enable)  
+);
+
+register PSW (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),
+    .REG_OUT(PSW_reg_out),  
+    .latch(PSW_latch), 
+    .enable(PSW_enable)  
+);
+
+
 leds_out leds_out_inst0(
     .in(reg_out),
     .leds(led)
