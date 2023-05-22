@@ -22,7 +22,7 @@ register register_inst0 (
 reg [15:0] r;
 
 // register is either set by latch or reset by reset
-always (@posedge clk) begin
+always @(posedge clk) begin
     if (reset) begin
         r <= 0;
     end else begin
