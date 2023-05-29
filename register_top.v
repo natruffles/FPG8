@@ -128,7 +128,7 @@ always @(posedge one_shot_clock) begin
     end
 end
 
-// w_drive_r drives the bus if latched, otherwise is high impedancex
+// w_drive_r drives the bus if latched, otherwise is high impedance
 assign w_bus = (latch) ? w_drive_r : 16'bZZZZZZZZZZZZZZZZ;
 
 endmodule
