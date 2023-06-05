@@ -1,4 +1,4 @@
-module register_top (
+module fpg8 (
     output [4:0] led,
     input b1, b2, b3, b4, clk
 );
