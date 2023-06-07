@@ -29,11 +29,24 @@ wire [15:0] GPR_reg_out_5;
 wire [15:0] GPR_reg_out_6;
 wire [15:0] GPR_reg_out_7;
 
+// output debugging register for IR
+wire [15:0] IR_reg_out;
+
+// wires connecting IR to other components
+wire [3:0] opcode;
+wire [2:0] rd_1;
+wire [2:0] rd_2;
+wire S;
+wire [1:0] shift;
+wire [2:0] rs_1;
+wire [2:0] rs_2;
+
 // control signal index;
 wire [2:0] ALU_control;
 wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
+wire IR_in;
 wire RAM_enable_read;
 wire RAM_enable_write;
 
@@ -85,7 +98,25 @@ GPR GPR (
     .Rs_2(...)
 );
 
+
+IR IR_inst0 (
+    .clk(one_shot_clock), 
+    .reset(reset),
+    .DATA(w_bus), 
+    .REG_OUT_IR(IR_reg_out),
+    .opcode_out(opcode),
+    .rd_out_1(rd_1),
+    .rd_out_2(rd_2),
+    .S(S),
+    .shift(shift),
+    .rs_1(rs_1),
+    .rs_2(rs_2),
+    .IR_in(IR_in)
+);
+
 // 256 possible addresses, each address holds a 16-bit word
+// 8-bit address, 16-bit data, reading and writing on same clock
+// cycle supported but not recommended
 ram #(   
     .MEM_WIDTH(16), 
     .MEM_DEPTH(256), 
@@ -108,15 +139,6 @@ register MDR (
     .REG_OUT(MDR_reg_out),  
     .latch(MDR_latch), 
     .enable(MDR_enable)  
-);
-
-register IR (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(IR_reg_out),  
-    .latch(IR_latch), 
-    .enable(IR_enable)  
 );
 
 register timer (
