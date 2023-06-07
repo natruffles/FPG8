@@ -50,7 +50,7 @@ end
 
 // initialize memory from file if available
 initial if (INIT_FILE) begin
-    $readmemh(INIT_FILE, mem);
+    $readmemb(INIT_FILE, mem);
 end
 
 endmodule
