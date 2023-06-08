@@ -16,10 +16,8 @@ wire [15:0] w_bus;
 // control functionality handled in code
 reg [15:0] w_drive_r;
 
-// output debugging register for debug register lol
-wire [15:0] reg_out;
-
-// output debugging registers for GPR
+// output debugging registers
+wire [15:0] reg_out;  // for debug register lol
 wire [15:0] GPR_reg_out_0;
 wire [15:0] GPR_reg_out_1;
 wire [15:0] GPR_reg_out_2;
@@ -28,9 +26,9 @@ wire [15:0] GPR_reg_out_4;
 wire [15:0] GPR_reg_out_5;
 wire [15:0] GPR_reg_out_6;
 wire [15:0] GPR_reg_out_7;
-
-// output debugging register for IR
 wire [15:0] IR_reg_out;
+// MAR_to_RAM is debug register for MAR
+wire [15:0] MDR_reg_out;
 
 // wires connecting IR to other components
 wire [3:0] opcode;
@@ -41,12 +39,19 @@ wire [1:0] shift;
 wire [2:0] rs_1;
 wire [2:0] rs_2;
 
+// wires connecting MAR/MDR to RAM
+wire [15:0] MAR_to_RAM;
+wire [15:0] MDR_RAM_connect;
+
 // control signal index;
 wire [2:0] ALU_control;
 wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
 wire IR_in;
+wire MAR_in;
+wire MDR_in;
+wire MDR_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
 
@@ -69,7 +74,7 @@ register register_inst0 (
 
 // Two inputs, one directly from bus and one from y register (after shifting)
 // outputs to Z register, functionality controlled by 3-bit ALU_control
-alu ALU(
+alu alu_inst0 (
     .bus(w_bus),
     .y_shifted(...),
     .ALU_out(...),
@@ -77,7 +82,7 @@ alu ALU(
 );
 
 // Eight 16-bit general purpose registers
-GPR GPR (
+GPR GPR_inst0 (
     .clk(one_shot_clock), 
     .reset(reset),
     .DATA(w_bus), 
@@ -92,13 +97,13 @@ GPR GPR (
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
     .GPR_select(GPR_select),
-    .Rd_1(...),
-    .Rd_2(...),
-    .Rs_1(...),
-    .Rs_2(...)
+    .Rd_1(rd_1),
+    .Rd_2(rd_2),
+    .Rs_1(rs_1),
+    .Rs_2(rs_2)
 );
 
-
+// instruction register, controlled input to bus, unbounded output to GPR, etc.
 IR IR_inst0 (
     .clk(one_shot_clock), 
     .reset(reset),
@@ -114,6 +119,29 @@ IR IR_inst0 (
     .IR_in(IR_in)
 );
 
+// memory address register
+MAR MAR_inst0 (
+    .clk(one_shot_clock),
+    .reset(reset), 
+    .DATA(w_bus), 
+    .REG_OUT_MAR(MAR_to_RAM),
+    .MAR_in(MAR_in)
+);
+
+// memory data register, has dual in/out ports (one to bus, one to RAM)
+MDR MDR_inst0 (
+    .clk(one_shot_clock), 
+    .reset(reset), 
+    .from_bus(w_bus),
+    .MDR_bus_connect(w_bus),
+    .REG_OUT_MDR(MDR_reg_out),
+    .MDR_RAM_connect(MDR_RAM_connect),
+    .MDR_in(MDR_in),
+    .MDR_out(MDR_out),
+    .write_to_MM(RAM_enable_write),
+    .read_from_MM(RAM_enable_read)
+);
+
 // 256 possible addresses, each address holds a 16-bit word
 // 8-bit address, 16-bit data, reading and writing on same clock
 // cycle supported but not recommended
@@ -125,22 +153,13 @@ ram #(
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
     .r_en(RAM_enable_read),
-    .w_addr(...),
-    .r_addr(...),
-    .w_data(...),
-    .r_data(...)
+    .w_addr(MAR_to_RAM),
+    .r_addr(MAR_to_RAM),
+    .w_data(MDR_RAM_connect),
+    .r_data(MDR_RAM_connect)
 );
 
 /*
-register MDR (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(MDR_reg_out),  
-    .latch(MDR_latch), 
-    .enable(MDR_enable)  
-);
-
 register timer (
     .clk(one_shot_clock),
     .reset(reset),
@@ -157,15 +176,6 @@ register conrom (
     .REG_OUT(conrom_reg_out),  
     .latch(conrom_latch), 
     .enable(conrom_enable)  
-);
-
-register MAR (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(MAR_reg_out),  
-    .latch(MAR_latch), 
-    .enable(MAR_enable)  
 );
 
 register Y (
