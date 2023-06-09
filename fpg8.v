@@ -27,6 +27,7 @@ wire [15:0] GPR_reg_out_5;
 wire [15:0] GPR_reg_out_6;
 wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
+wire [15:0] Y_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 
@@ -54,6 +55,9 @@ wire MDR_in;
 wire MDR_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
+wire Y_in;
+wire Y_out;
+wire Y_offset_in;
 
 // handles using button to pulse clock
 clock_pulser clock_pulser_inst0 (
@@ -156,6 +160,16 @@ ram #(
     .MDR_RAM_connect(MDR_RAM_connect)
 );
 
+Y Y_inst0 (
+    .clk(one_shot_clock),
+    .reset(reset), 
+    .DATA(w_bus), 
+    .REG_OUT_Y(Y_reg_out),
+    .Y_in(Y_in),
+    .Y_out(Y_out),
+    .Y_offset_in(Y_offset_in)
+);
+
 /*
 register timer (
     .clk(one_shot_clock),
@@ -173,15 +187,6 @@ register conrom (
     .REG_OUT(conrom_reg_out),  
     .latch(conrom_latch), 
     .enable(conrom_enable)  
-);
-
-register Y (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(Y_reg_out),  
-    .latch(Y_latch), 
-    .enable(Y_enable)  
 );
 
 register Z (
