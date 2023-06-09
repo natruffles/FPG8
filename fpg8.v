@@ -143,20 +143,17 @@ MDR MDR_inst0 (
 );
 
 // 256 possible addresses, each address holds a 16-bit word
-// 8-bit address, 16-bit data, reading and writing on same clock
-// cycle supported but not recommended
+// 8-bit address, 16-bit data, can read or write through single inout port
 ram #(   
     .MEM_WIDTH(16), 
     .MEM_DEPTH(256), 
     .INIT_FILE("mem_init.txt")
-) RAM (
+) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
     .r_en(RAM_enable_read),
-    .w_addr(MAR_to_RAM),
-    .r_addr(MAR_to_RAM),
-    .w_data(MDR_RAM_connect),
-    .r_data(MDR_RAM_connect)
+    .addr(MAR_to_RAM[7:0]),
+    .MDR_RAM_connect(MDR_RAM_connect)
 );
 
 /*

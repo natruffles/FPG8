@@ -9,10 +9,8 @@ module ram #(
     input clk,
     input w_en,
     input r_en,
-    input [ADDR_WIDTH - 1:0] w_addr,
-    input [ADDR_WIDTH - 1:0] r_addr,
-    input [MEM_WIDTH - 1:0] w_data,
-    output reg [MEM_WIDTH - 1:0] r_data
+    input [ADDR_WIDTH - 1:0] addr,
+    inout [MEM_WIDTH - 1:0] MDR_RAM_connect
 );
 
 // initialization template
@@ -25,10 +23,8 @@ ram #(
     .clk(),
     .w_en(),
     .r_en(),
-    .w_addr(),
-    .r_addr(),
-    .w_data(),
-    .r_data()
+    .addr(),
+    .MDR_RAM_connect()
 );
 */
 
@@ -41,12 +37,11 @@ reg [MEM_WIDTH - 1:0] mem [0:MEM_DEPTH - 1];
 // reading and writing from memory block
 always @ (posedge clk) begin
     if (w_en) begin
-        mem[w_addr] <= w_data;
-    end
-    if (r_en) begin
-        r_data <= mem[r_addr];
+        mem[addr] <= MDR_RAM_connect;
     end
 end
+
+assign MDR_RAM_connect = (r_en)? mem[addr] : 16'bZZZZZZZZZZZZZZZZ;
 
 // initialize memory from file if available
 initial if (INIT_FILE) begin

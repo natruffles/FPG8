@@ -1,3 +1,5 @@
+// NOTE: now doesn't work bc updated ram module
+
 // testbench for ram, from shawn hymel tutorial series:
 // https://github.com/ShawnHymel/introduction-to-fpga/blob/main/08-memory/example-02-memory-initialization/memory_tb.v
 
