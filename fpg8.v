@@ -44,6 +44,9 @@ wire [2:0] rs_2;
 wire [15:0] MAR_to_RAM;
 wire [15:0] MDR_RAM_connect;
 
+// wire connecting Y/shifter to ALU
+wire [15:0] Y_to_ALU;
+
 // control signal index;
 wire [2:0] ALU_control;
 wire GPR_in;
@@ -58,6 +61,8 @@ wire RAM_enable_write;
 wire Y_in;
 wire Y_out;
 wire Y_offset_in;
+wire Y_shift_left;
+wire Y_shift_right;
 
 // handles using button to pulse clock
 clock_pulser clock_pulser_inst0 (
@@ -80,7 +85,7 @@ register register_inst0 (
 // outputs to Z register, functionality controlled by 3-bit ALU_control
 alu alu_inst0 (
     .bus(w_bus),
-    .y_shifted(...),
+    .y_shifted(Y_to_ALU),
     .ALU_out(...),
     .ALU_control(ALU_control)
 );
@@ -158,6 +163,15 @@ ram #(
     .r_en(RAM_enable_read),
     .addr(MAR_to_RAM[7:0]),
     .MDR_RAM_connect(MDR_RAM_connect)
+);
+
+// shifts value between Y and ALU
+shifter shifter_inst0 (
+    .from_Y(Y_reg_out),
+    .Y_shifted(Y_to_ALU),
+    .Y_shift_left(Y_shift_left),
+    .Y_shift_right(Y_shift_right),
+    .shift_amount(shift)
 );
 
 Y Y_inst0 (
