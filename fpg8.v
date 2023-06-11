@@ -28,6 +28,9 @@ wire [15:0] GPR_reg_out_6;
 wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
 wire [15:0] Y_reg_out;
+wire [15:0] ALU_reg_out;
+wire [15:0] Z1_reg_out;
+wire [15:0] Z2_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 
@@ -47,6 +50,10 @@ wire [15:0] MDR_RAM_connect;
 // wire connecting Y/shifter to ALU
 wire [15:0] Y_to_ALU;
 
+// comparator output bits routed to PSW
+wire CC_N;
+wire CC_Z;
+
 // control signal index;
 wire [2:0] ALU_control;
 wire GPR_in;
@@ -63,6 +70,8 @@ wire Y_out;
 wire Y_offset_in;
 wire Y_shift_left;
 wire Y_shift_right;
+wire Z_in;
+wire Z_out;
 
 // handles using button to pulse clock
 clock_pulser clock_pulser_inst0 (
@@ -86,8 +95,15 @@ register register_inst0 (
 alu alu_inst0 (
     .bus(w_bus),
     .y_shifted(Y_to_ALU),
-    .ALU_out(...),
+    .ALU_out(ALU_reg_out),
     .ALU_control(ALU_control)
+);
+
+// generates 2 status bits based on output from ALU
+comparator comparator_inst0 (
+    .from_ALU(ALU_reg_out),
+    .CC_Z(CC_Z),
+    .CC_N(CC_N)
 );
 
 // Eight 16-bit general purpose registers
@@ -174,6 +190,7 @@ shifter shifter_inst0 (
     .shift_amount(shift)
 );
 
+// input register for ALU (other input is bus)
 Y Y_inst0 (
     .clk(one_shot_clock),
     .reset(reset), 
@@ -182,6 +199,19 @@ Y Y_inst0 (
     .Y_in(Y_in),
     .Y_out(Y_out),
     .Y_offset_in(Y_offset_in)
+);
+
+// output register for ALU in primary/replica config such that
+// Z_in and Z_out can happen simultaneously
+Z Z_inst0 (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .from_ALU(ALU_reg_out),
+    .REG_OUT_Z1(Z1_reg_out), 
+    .REG_OUT_Z2(Z2_reg_out),
+    .out_to_bus(w_bus),
+    .Z_in(Z_in),
+    .Z_out(Z_out)
 );
 
 /*
@@ -201,15 +231,6 @@ register conrom (
     .REG_OUT(conrom_reg_out),  
     .latch(conrom_latch), 
     .enable(conrom_enable)  
-);
-
-register Z (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(Z_reg_out),  
-    .latch(Z_latch), 
-    .enable(Z_enable)  
 );
 
 register PSW (
