@@ -56,6 +56,7 @@ wire CC_Z;
 
 // control signal index;
 wire [2:0] ALU_control;
+wire con_ROM_out;
 wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
@@ -104,6 +105,12 @@ comparator comparator_inst0 (
     .from_ALU(ALU_reg_out),
     .CC_Z(CC_Z),
     .CC_N(CC_N)
+);
+
+// outputs value of "8" to the bus when enabled
+constant_ROM constant_ROM_inst0 (
+    .DATA(w_bus),
+    .enable(con_ROM_out)
 );
 
 // Eight 16-bit general purpose registers
@@ -222,15 +229,6 @@ register timer (
     .REG_OUT(timer_reg_out),  
     .latch(timer_latch), 
     .enable(timer_enable)  
-);
-
-register conrom (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(conrom_reg_out),  
-    .latch(conrom_latch), 
-    .enable(conrom_enable)  
 );
 
 register PSW (
