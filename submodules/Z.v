@@ -35,8 +35,8 @@ always @(posedge clk) begin
         Z2 <= 0;
     end else if (Z_in) begin
         Z1 <= from_ALU;
-        Z2 <= Z1;
     end
+    Z2 <= Z1;
 end
 
 // Z2 drives bus wire if Z_out is high

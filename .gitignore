@@ -4,3 +4,4 @@ hardware.bin
 hardware.json
 hardware.out
 abc.history
+*.gtkw
