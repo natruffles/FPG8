@@ -31,6 +31,7 @@ wire [15:0] Y_reg_out;
 wire [15:0] ALU_reg_out;
 wire [15:0] Z1_reg_out;
 wire [15:0] Z2_reg_out;
+wire [15:0] timer_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 
@@ -66,6 +67,8 @@ wire MDR_in;
 wire MDR_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
+wire timer_in;
+wire timeout;
 wire Y_in;
 wire Y_out;
 wire Y_offset_in;
@@ -197,6 +200,17 @@ shifter shifter_inst0 (
     .shift_amount(shift)
 );
 
+// generates timeout signal when timer counts down to 0
+// timeout signal will remain high until timer value is reset, input with nonzero value
+timer timer_inst0 (
+    .clk(one_shot_clock),
+    .reset(reset), 
+    .DATA(w_bus), 
+    .REG_OUT_TIMER(timer_reg_out), 
+    .timer_in(timer_in),
+    .timeout(timeout)
+);
+
 // input register for ALU (other input is bus)
 Y Y_inst0 (
     .clk(one_shot_clock),
@@ -222,15 +236,6 @@ Z Z_inst0 (
 );
 
 /*
-register timer (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(timer_reg_out),  
-    .latch(timer_latch), 
-    .enable(timer_enable)  
-);
-
 register PSW (
     .clk(one_shot_clock),
     .reset(reset),
