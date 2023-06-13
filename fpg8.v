@@ -32,6 +32,7 @@ wire [15:0] ALU_reg_out;
 wire [15:0] Z1_reg_out;
 wire [15:0] Z2_reg_out;
 wire [15:0] timer_reg_out;
+wire [15:0] PSW_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 
@@ -65,6 +66,8 @@ wire IR_in;
 wire MAR_in;
 wire MDR_in;
 wire MDR_out;
+wire PSW_in;
+wire PSW_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
 wire timer_in;
@@ -178,6 +181,20 @@ MDR MDR_inst0 (
     .read_from_MM(RAM_enable_read)
 );
 
+PSW PSW_inst0 (
+    .clk(one_shot_clock),
+    .reset(reset),
+    .DATA(w_bus),  
+    .REG_OUT_PSW(PSW_reg_out), 
+    .latch(PSW_in), 
+    .enable(PSW_out), 
+    .IR_opcode(opcode),
+    .IR_S(S),
+    .Z_in(Z_in),
+    .CC_Z_in(CC_Z),
+    .CC_N_in(CC_N)
+);
+
 // 256 possible addresses, each address holds a 16-bit word
 // 8-bit address, 16-bit data, can read or write through single inout port
 ram #(   
@@ -235,17 +252,6 @@ Z Z_inst0 (
     .Z_in(Z_in),
     .Z_out(Z_out)
 );
-
-/*
-register PSW (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(PSW_reg_out),  
-    .latch(PSW_latch), 
-    .enable(PSW_enable)  
-);
-*/
 
 
 leds_out leds_out_inst0(
