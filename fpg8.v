@@ -113,6 +113,7 @@ comparator comparator_inst0 (
 // outputs value of "8" to the bus when enabled
 constant_ROM constant_ROM_inst0 (
     .DATA(w_bus),
+    .reset_to_constant_val(reset),
     .enable(con_ROM_out)
 );
 
