@@ -31,41 +31,70 @@ module control_unit (
 
 // initialization template
 /*
-do last
+control_unit control_unit_inst0 (
+    .clk(),
+    .reset(),
+    .opcode(),
+    .PSW_bits(),
+    .IR_Rs2(),
+    .timeout(),
+    .REG_OUT_CONTROL_UNIT(),
+    .ALU_control(),
+    .con_ROM_out(),
+    .GPR_in(),
+    .GPR_out(),
+    .GPR_select(),
+    .IR_in(),
+    .MAR_in(),
+    .MDR_in(),
+    .MDR_out(),
+    .PSW_in(),
+    .PSW_out(),
+    .RAM_enable_read(),
+    .RAM_enable_write(),
+    .timer_in(),
+    .Y_in(),
+    .Y_out(),
+    .Y_offset_in(),
+    .Y_shift_left(),
+    .Y_shift_right(),
+    .Z_in(),
+    .Z_out()
+);
 */
 
 // all states labelled
-localparam STATE_F1     = 5'd0;
-localparam STATE_F2     = 5'd1;
-localparam STATE_F3     = 5'd2;
-localparam STATE_E11_1       = 5'd3;
-localparam STATE_E12_1       = 5'd4;
-localparam STATE_E12_2       = 5'd5;
-localparam STATE_E13_1       = 5'd6;
-localparam STATE_E6_1       = 5'd7;
-localparam STATE_E7_1       = 5'd8;
-localparam STATE_E7_2       = 5'd9;
-localparam STATE_E8_2       = 5'd10;
-localparam STATE_E14_2       = 5'd11;
-localparam STATE_E15_2       = 5'd12;
-localparam STATE_E0_1       = 5'd13;
-localparam STATE_E0_2       = 5'd14;
-localparam STATE_E1_2       = 5'd15;
-localparam STATE_E2_2       = 5'd16;
-localparam STATE_E3_2       = 5'd17;
-localparam STATE_E4_1       = 5'd18;
-localparam STATE_D5A       = 5'd19;
-localparam STATE_D5B       = 5'd20;
-localparam STATE_E0_3       = 5'd21;
-localparam STATE_PCV1       = 5'd22;
-localparam STATE_T1       = 5'd23;
-localparam STATE_PCV2       = 5'd24;
-localparam STATE_PCV3       = 5'd25;
-localparam STATE_PCV4       = 5'd26;
-localparam STATE_PCV5       = 5'd27;
-localparam STATE_PCV6       = 5'd28;
-localparam STATE_PCV7       = 5'd29;
-localparam STATE_PCV8       = 5'd30;
+localparam STATE_F1     = 5'h0;
+localparam STATE_F2     = 5'h1;
+localparam STATE_F3     = 5'h2;
+localparam STATE_E11_1       = 5'h3;
+localparam STATE_E12_1       = 5'h4;
+localparam STATE_E12_2       = 5'h5;
+localparam STATE_E13_1       = 5'h6;
+localparam STATE_E6_1       = 5'h7;
+localparam STATE_E7_1       = 5'h8;
+localparam STATE_E7_2       = 5'h9;
+localparam STATE_E8_2       = 5'hA;
+localparam STATE_E14_2       = 5'hB;
+localparam STATE_E15_2       = 5'hC;
+localparam STATE_E0_1       = 5'hD;
+localparam STATE_E0_2       = 5'hE;
+localparam STATE_E1_2       = 5'hF;
+localparam STATE_E2_2       = 5'h10;
+localparam STATE_E3_2       = 5'h11;
+localparam STATE_E4_1       = 5'h12;
+localparam STATE_D5A       = 5'h13;
+localparam STATE_D5B       = 5'h14;
+localparam STATE_E0_3       = 5'h15;
+localparam STATE_PCV1       = 5'h16;
+localparam STATE_T1       = 5'h17;
+localparam STATE_PCV2       = 5'h18;
+localparam STATE_PCV3       = 5'h19;
+localparam STATE_PCV4       = 5'h1A;
+localparam STATE_PCV5       = 5'h1B;
+localparam STATE_PCV6       = 5'h1C;
+localparam STATE_PCV7       = 5'h1D;
+localparam STATE_PCV8       = 5'h1E;
 
 // used to store the current state of the control unit
 reg [4:0] state;
@@ -236,5 +265,7 @@ assign ALU_control[0] = (ALU_and | ALU_invert_bus_input | ALU_pass_Y);
 assign GPR_select[2] = (GPR_select_Rs1 | GPR_select_Rs2);
 assign GPR_select[1] = (GPR_select_Rd_1 | GPR_select_Rd_2);
 assign GPR_select[0] = (GPR_select_PC | GPR_select_Rd_2 | GPR_select_Rs2);
+
+assign REG_OUT_CONTROL_UNIT = state;
 
 endmodule

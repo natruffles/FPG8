@@ -1,14 +1,10 @@
-module fpg8 (
-    output [4:0] led,
-    input b1, b2, b3, b4, clk
-);
+`timescale 1 ns / 10 ps
+
+module fpg8_tb ();
 
 // physical buttons
-wire one_shot_clock;
-wire reset = ~b1;
-wire latch = ~b2;
-wire enable = ~b3;
-wire button = ~b4;
+reg clk = 0;
+reg reset = 0;
 
 // bus wire and register to drive the bus
 wire [15:0] w_bus;
@@ -80,23 +76,6 @@ wire Y_shift_left;
 wire Y_shift_right;
 wire Z_in;
 wire Z_out;
-
-// handles using button to pulse clock
-clock_pulser clock_pulser_inst0 (
-    .clk(clk),
-    .button(button),
-    .one_clock_pulse(one_shot_clock)
-);
-
-// debugging register attached to bus
-register register_inst0 (
-    .clk(one_shot_clock),
-    .reset(reset),
-    .DATA(w_bus),
-    .REG_OUT(reg_out),  
-    .latch(latch), 
-    .enable(enable)  
-);
 
 control_unit control_unit_inst0 (
     .clk(one_shot_clock),
@@ -285,22 +264,33 @@ Z Z_inst0 (
     .Z_out(Z_out)
 );
 
+// Simulation time: 10000 * 1 ns = 10 us
+localparam DURATION = 10000;
 
-leds_out leds_out_inst0(
-    .in(reg_out),
-    .leds(led)
-);
-
-// logic to handle contents of w_drive_r
-always @(posedge one_shot_clock) begin
-    if (reset) begin
-        w_drive_r <= 16'b0101010100000000;
-    end else if (latch) begin
-        w_drive_r <= w_drive_r + 1;
-    end
+// Generate clock signal: 1 / ((2 * 41.67) * 1 ns) = 11,999,040.08 MHz
+always begin
+    #41.67
+    clk = ~clk;
 end
 
-// w_drive_r drives the bus if latched, otherwise is high impedance
-assign w_bus = (latch) ? w_drive_r : 16'bZZZZZZZZZZZZZZZZ;
+initial begin
+    reset = 1;
+    #(2 * 41.67)
+    reset = 0;
+end
 
+// Run simulation (output to .vcd file)
+initial begin
+    // Create simulation output file 
+    $dumpfile("fpg8_tb.vcd");
+    $dumpvars(0, fpg8_tb);
+    
+    // Wait for given amount of time for simulation to complete
+    #(DURATION)
+    
+    // Notify and end simulation
+    $display("Finished!");
+    $finish;
+end
+    
 endmodule
