@@ -232,7 +232,7 @@ PSW PSW_inst0 (
 ram #(   
     .MEM_WIDTH(16), 
     .MEM_DEPTH(256), 
-    .INIT_FILE("mem_init.txt")
+    .INIT_FILE("ram_mem_init.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),

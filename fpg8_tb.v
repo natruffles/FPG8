@@ -3,7 +3,7 @@
 module fpg8_tb ();
 
 // physical buttons
-reg clk = 0;
+reg one_shot_clock = 0;
 reg reset = 0;
 
 // bus wire and register to drive the bus
@@ -211,7 +211,7 @@ PSW PSW_inst0 (
 ram #(   
     .MEM_WIDTH(16), 
     .MEM_DEPTH(256), 
-    .INIT_FILE("mem_init.txt")
+    .INIT_FILE("ram_mem_init.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
@@ -264,13 +264,14 @@ Z Z_inst0 (
     .Z_out(Z_out)
 );
 
-// Simulation time: 10000 * 1 ns = 10 us
-localparam DURATION = 10000;
+
+// Simulation time: 1000000 * 1 ns = 1 ms
+localparam DURATION = 1000000;
 
 // Generate clock signal: 1 / ((2 * 41.67) * 1 ns) = 11,999,040.08 MHz
 always begin
     #41.67
-    clk = ~clk;
+    one_shot_clock = ~one_shot_clock;
 end
 
 initial begin

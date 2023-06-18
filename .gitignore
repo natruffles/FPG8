@@ -1,7 +1,8 @@
 .sconsign.dblite
-hardware.asc
-hardware.bin
-hardware.json
-hardware.out
+*.asc
+*.bin
+*.json
+*.out
+*.vcd
 abc.history
 *.gtkw
