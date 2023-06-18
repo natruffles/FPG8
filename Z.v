@@ -35,12 +35,13 @@ always @(posedge clk) begin
         Z2 <= 0;
     end else if (Z_in) begin
         Z1 <= from_ALU;
-    end
+    end 
     Z2 <= Z1;
 end
 
-// Z2 drives bus wire if Z_out is high
-assign out_to_bus = (Z_out)? Z2 : 16'bZZZZZZZZZZZZZZZZ;
+assign out_to_bus = (Z_out & ~Z_in)? Z1 : 
+                    (Z_out & Z_in)? Z2 :
+                    16'bZZZZZZZZZZZZZZZZ;
 
 assign REG_OUT_Z1 = Z1;
 assign REG_OUT_Z2 = Z2;
