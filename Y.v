@@ -37,6 +37,6 @@ end
 
 // if Y_out, r is driven to data port, else no connection (high impedance)
 assign DATA = (Y_out)? r : 16'bZZZZZZZZZZZZZZZZ;
-assign REG_OUT_Y = r;
+assign REG_OUT_Y = (Y_in)? DATA : r;
 
 endmodule
