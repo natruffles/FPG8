@@ -196,7 +196,9 @@ MAR MAR_inst0 (
     .reset(reset), 
     .DATA(w_bus), 
     .REG_OUT_MAR(MAR_to_RAM),
-    .MAR_in(MAR_in)
+    .MAR_in(MAR_in),
+    .r_en(RAM_enable_read),
+    .w_en(RAM_enable_write)
 );
 
 // memory data register, has dual in/out ports (one to bus, one to RAM)
@@ -223,6 +225,7 @@ PSW PSW_inst0 (
     .IR_opcode(opcode),
     .IR_S(S),
     .Z_in(Z_in),
+    .ALU_control(ALU_control),
     .CC_Z_in(CC_Z),
     .CC_N_in(CC_N)
 );

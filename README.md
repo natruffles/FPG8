@@ -106,3 +106,34 @@ The instructions above and the data that the instructions work with has to fit o
 255 0000000110100100
 ```
 In the next update, I will demonstrate my working simulation of my control unit performing binary multiplication.
+
+### Evaluating performance of processor in simple terms
+Listed below are the 16 possible instructions and how many clock cycles each takes to execute (assuming no traps / program check violations):
+|Instruction |Opcode| Description | Clock Cycles to complete |
+|-----|--------|-----------------|------|
+|ADD|0000 (0)    |GPR[Rd] = GPR[Rs1] + left_shifted(GPR[Rs2], IR.Shift)|6
+|SUB  |0001 (1)  |GPR[Rd] = GPR[Rs1] - left_shifted(GPR[Rs2], IR.Shift)|6
+|AND  |0010 (2)  |GPR[Rd] = GPR[Rs1] and left_shifted(GPR[Rs2], IR.Shift)|6
+|OR  |0011 (3)   |GPR[Rd] = GPR[Rs1] or left_shifted(GPR[Rs2], IR.Shift)|6
+|NOT  |0100 (4)  |GPR[Rd] = not GPR[Rs1]|5
+|SHFT  |0101 (5) | if IR.Rs2 == 0 then GPR[Rd] = shift_left(GPR[Rs1], IR.Shift) else GPR[Rd] = shift_right(GPR[Rs1], IR.Shift)|5
+|LDI  |0110 (6)  |GPR[Rd] = IR.Offset|4
+|LD  |0111 (7)   |GPR[Rd] == MM[PC + IR.Offset]|5
+|ST  |1000 (8)   |MM[PC + IR.Offset] = GPR[RD]|5
+|BRN  |1001 (9)  |If CC.N then PC = PC + IR.Offset|4
+|BRZ  |1010 (10) |If CC.Z then PC = PC + IR.Offset|4
+|BR  |1011 (11)  |PC = PC + IR.Offset|4
+|JSR  |1100 (12) |GPR[Rd] = PC; PC = PC + IR.Offset|6
+|RTS  |1101 (13) |PC = GPR[Rd] + IR.Offset|5
+|CLK  |1110 (14) |Timer = MM[PC + IR.Offset]|5
+|LPSW  |1111 (15)|PSW = MM[PC + IR.Offset]|5
+
+All instructions execute within 4-6 clock cycles, with 3 of those cycles always taken up by fetching the instruction from memory. The average clock cycle time for all 16 instructions is 5.0625 although this value does not take into account average instruction execution frequency. That will only be known once more extensive programs have been developed with this ISA to execute on this processor.
+
+If a timeout trap is thrown after an instruction is executed, an additional 8 clock cycles are added to that instruction's execution time. 
+
+If a program check violation occurs when attempting to execute CLK or LPSW while not in privileged mode, those instructions will take 11 total clock cycles to execute (including handling of the PCV).
+
+When executing the above sample program, assuming two nonzero numbers are multiplied, the first six instructions are always executed and take a total of 28 clock cycles. Then, the next four instructions (PC 6,7,8,5) are executed x times, where x = GPR[1](initial); the four instructions take 21 clock cycles. In order to decrease the average program execution time dramatically, the value stored in 0xFF in RAM should be smaller in magnitude than the value stored in 0xFE. Then, the last two instructions are executed and take a total of 10 clock cycles. 
+
+The execution time for the program is 28 + 10 + 21*x = **38 + 21 * 0xFE** clock cycles.
