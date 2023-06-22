@@ -5,6 +5,7 @@ module control_unit (
     input [2:0] PSW_bits,
     input [2:0] IR_Rs2,
     input timeout,
+    input [15:0] instruction,
     output [4:0] REG_OUT_CONTROL_UNIT,
     output [2:0] ALU_control,
     output con_ROM_out,
@@ -38,6 +39,7 @@ control_unit control_unit_inst0 (
     .PSW_bits(),
     .IR_Rs2(),
     .timeout(),
+    .instruction(),
     .REG_OUT_CONTROL_UNIT(),
     .ALU_control(),
     .con_ROM_out(),
@@ -100,6 +102,9 @@ localparam STATE_IDLE       = 5'h1F;
 // used to store the current state of the control unit
 reg [4:0] state;
 
+// put processor in infinite loop once this flag goes high
+reg done_flag;
+
 // inbetween wires that will be combined into GPR_select and ALU_select
 wire GPR_select_0; wire GPR_select_PC;
 wire GPR_select_Rd_1; wire GPR_select_Rd_2; 
@@ -119,11 +124,18 @@ always @ (posedge clk) begin
     // On reset, return to idle state
     if (reset == 1'b1) begin
         state <= STATE_IDLE;
+        done_flag <= 0;
         
     // Define the state transitions
     end else begin
         case (state)
-            STATE_IDLE: state <= STATE_F1;
+            STATE_IDLE: begin
+                if (done_flag) begin
+                    state <= STATE_IDLE;
+                end else begin
+                    state <= STATE_F1;
+                end
+            end
 
             STATE_F1: state <= STATE_F2;
 
@@ -141,7 +153,12 @@ always @ (posedge clk) begin
                 end else if (((opcode == 14 || opcode == 15) && privileged) || opcode == 7 || opcode == 8) begin
                     state <= STATE_E7_1;
                 end else if (opcode >= 0 && opcode <= 3) begin
-                    state <= STATE_E0_1;
+                    if (instruction == 16'b0000000000000000) begin
+                        state <= STATE_IDLE;
+                        done_flag <= 1;
+                    end else begin
+                        state <= STATE_E0_1;
+                    end
                 end else if (opcode == 4) begin
                     state <= STATE_E4_1;
                 end else if (opcode == 5 && IR_Rs2 == 0) begin

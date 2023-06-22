@@ -105,6 +105,7 @@ control_unit control_unit_inst0 (
     .PSW_bits(PSW_reg_out[2:0]),
     .IR_Rs2(rs_2),
     .timeout(timeout),
+    .instruction(IR_reg_out),
     .REG_OUT_CONTROL_UNIT(control_unit_reg_out),
     .ALU_control(ALU_control),
     .con_ROM_out(con_ROM_out),

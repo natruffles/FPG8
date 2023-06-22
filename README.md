@@ -83,9 +83,9 @@ Go to the BRZ instruction
 ST 3 244 (PC = 9)
 MM[9 + 244] = MM[253] = GPR[3]
 
-RTS 0 0 (PC = 10)
-PC = GPR[0] + 0 = 0
-Go back to the first instruction
+ADD 0 0 0 (PC = 10)
+GPR[0] = GPR[0] + GPR[0]
+Represents null instruction, terminates program execution
 ```
 The instructions above and the data that the instructions work with has to fit onto RAM that consists of 512 bytes, or 256 words of 16 bits each. The instructions fill up addresses 0-10 inclusive, while the R/W data fills up addresses 253-255, inclusive.
 ```
@@ -99,7 +99,7 @@ The instructions above and the data that the instructions work with has to fit o
 7 0001 1 00 001 001 100
 8 1101 000 000000101
 9 1000 011 011110100
-10 1101 000 000000000
+10 0000 0 00 000 000 000
 ...
 253 (should write) 0111000100110100
 254 0000000001000101
@@ -127,13 +127,14 @@ Listed below are the 16 possible instructions and how many clock cycles each tak
 |RTS  |1101 (13) |PC = GPR[Rd] + IR.Offset|5
 |CLK  |1110 (14) |Timer = MM[PC + IR.Offset]|5
 |LPSW  |1111 (15)|PSW = MM[PC + IR.Offset]|5
+|NULL|0000 (0)    |GPR[0] = GPR[0] + left_shifted(GPR[0], 0)|3
 
-All instructions execute within 4-6 clock cycles, with 3 of those cycles always taken up by fetching the instruction from memory. The average clock cycle time for all 16 instructions is 5.0625 although this value does not take into account average instruction execution frequency. That will only be known once more extensive programs have been developed with this ISA to execute on this processor.
+All instructions execute within 4-6 clock cycles (besides NULL instructions which terminate program directly after fetch states), with 3 of those cycles always taken up by fetching the instruction from memory. The average clock cycle time for all 16 instructions is 5.0625 although this value does not take into account average instruction execution frequency. That will only be known once more extensive programs have been developed with this ISA to execute on this processor.
 
 If a timeout trap is thrown after an instruction is executed, an additional 8 clock cycles are added to that instruction's execution time. 
 
 If a program check violation occurs when attempting to execute CLK or LPSW while not in privileged mode, those instructions will take 11 total clock cycles to execute (including handling of the PCV).
 
-When executing the above sample program, assuming two nonzero numbers are multiplied, the first six instructions are always executed and take a total of 28 clock cycles. Then, the next four instructions (PC 6,7,8,5) are executed x times, where x = GPR[1](initial); the four instructions take 21 clock cycles. In order to decrease the average program execution time dramatically, the value stored in 0xFF in RAM should be smaller in magnitude than the value stored in 0xFE. Then, the last two instructions are executed and take a total of 10 clock cycles. 
+When executing the above sample program, assuming two nonzero numbers are multiplied, the first six instructions are always executed and take a total of 28 clock cycles. Then, the next four instructions (PC 6,7,8,5) are executed x times, where x = GPR[1](initial); the four instructions take 21 clock cycles. In order to decrease the average program execution time dramatically, the value stored in 0xFF in RAM should be smaller in magnitude than the value stored in 0xFE. Then, the last two instructions are executed and take a total of 8 clock cycles. 
 
-The execution time for the program is 28 + 10 + 21*x = **38 + 21 * 0xFE** clock cycles.
+The execution time for the program is 28 + 8 + 21*x = **36 + 21 * 0xFE** clock cycles.
