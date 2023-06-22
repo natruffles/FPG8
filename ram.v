@@ -10,7 +10,9 @@ module ram #(
     input w_en,
     input r_en,
     input [ADDR_WIDTH - 1:0] addr,
-    inout [MEM_WIDTH - 1:0] MDR_RAM_connect
+    inout [MEM_WIDTH - 1:0] MDR_RAM_connect,
+    input [MEM_WIDTH - 1:0] write_data,
+    output [15:0] RAM_REG_OUT
 );
 
 // initialization template
@@ -24,7 +26,8 @@ ram #(
     .w_en(),
     .r_en(),
     .addr(),
-    .MDR_RAM_connect()
+    .MDR_RAM_connect(),
+    .write_data()
 );
 */
 
@@ -37,7 +40,7 @@ reg [MEM_WIDTH - 1:0] mem [0:MEM_DEPTH - 1];
 // reading and writing from memory block
 always @ (posedge clk) begin
     if (w_en) begin
-        mem[addr] <= MDR_RAM_connect;
+        mem[addr] <= write_data;
     end
 end
 
@@ -47,5 +50,7 @@ assign MDR_RAM_connect = (r_en)? mem[addr] : 16'bZZZZZZZZZZZZZZZZ;
 initial if (INIT_FILE) begin
     $readmemb(INIT_FILE, mem);
 end
+
+assign RAM_REG_OUT = mem[253];
 
 endmodule

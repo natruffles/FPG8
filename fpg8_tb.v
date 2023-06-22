@@ -32,6 +32,7 @@ wire [15:0] PSW_reg_out;
 wire [4:0] control_unit_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
+wire [15:0] RAM_reg_out;
 
 // wires connecting IR to other components
 wire [3:0] opcode;
@@ -220,7 +221,9 @@ ram #(
     .w_en(RAM_enable_write),
     .r_en(RAM_enable_read),
     .addr(MAR_to_RAM[7:0]),
-    .MDR_RAM_connect(MDR_RAM_connect)
+    .MDR_RAM_connect(MDR_RAM_connect),
+    .write_data(MDR_RAM_connect),
+    .RAM_REG_OUT(RAM_reg_out)
 );
 
 // shifts value between Y and ALU

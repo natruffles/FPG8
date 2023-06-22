@@ -48,6 +48,6 @@ assign MDR_RAM_connect = (write_to_MM & ~MDR_in)? r :
                          (write_to_MM & MDR_in)? from_bus :
                          16'bZZZZZZZZZZZZZZZZ;
 
-assign REG_OUT_MDR = r;
+assign REG_OUT_MDR = (write_to_MM & MDR_in) ? from_bus : r;
 
 endmodule
