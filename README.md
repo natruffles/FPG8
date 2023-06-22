@@ -76,9 +76,13 @@ SUB 1 1 4 (PC = 7)
 GPR[1] = GPR[1] - GPR[4]
 Decrement MM[0xFF] by 1
 
-RTS 0 5 (PC = 8)
-PC = GPR[0] + 5 = 5
-Go to the BRZ instruction
+//RTS 0 5 (PC = 8)
+//PC = GPR[0] + 5 = 5
+//Go to the BRZ instruction
+
+BR 253 (PC = 8)
+PC = PC + 253 = 8 + 253 = 261 % 256 = 5
+Go to the BRZ instruction, 256 RAM addresses cause MAR = RAM % 256
 
 ST 3 244 (PC = 9)
 MM[9 + 244] = MM[253] = GPR[3]
@@ -97,7 +101,7 @@ The instructions above and the data that the instructions work with has to fit o
 5 1010 000 000000100
 6 0000 0 00 011 011 010
 7 0001 1 00 001 001 100
-8 1101 000 000000101
+8 1011 000 011111101
 9 1000 011 011110100
 10 0000 0 00 000 000 000
 ...
