@@ -102,8 +102,8 @@ The instructions above and the data that the instructions work with has to fit o
 10 0000 0 00 000 000 000
 ...
 253 (should write) 0111000100110100
-254 0000000001000101
-255 0000000110100100
+254 0000000110100100
+255 0000000001000101
 ```
 In the next update, I will demonstrate my working simulation of my control unit performing binary multiplication.
 
