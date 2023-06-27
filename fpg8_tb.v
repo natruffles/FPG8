@@ -45,7 +45,8 @@ wire [2:0] rs_2;
 
 // wires connecting MAR/MDR to RAM
 wire [15:0] MAR_to_RAM;
-wire [15:0] MDR_RAM_connect;
+wire [15:0] MDR_to_RAM;
+wire [15:0] RAM_to_MDR;
 
 // wire connecting Y/shifter to ALU
 wire [15:0] Y_to_ALU;
@@ -189,7 +190,8 @@ MDR MDR_inst0 (
     .from_bus(w_bus),
     .MDR_bus_connect(w_bus),
     .REG_OUT_MDR(MDR_reg_out),
-    .MDR_RAM_connect(MDR_RAM_connect),
+    .read_data(RAM_to_MDR),
+    .write_data(MDR_to_RAM),
     .MDR_in(MDR_in),
     .MDR_out(MDR_out),
     .write_to_MM(RAM_enable_write),
@@ -211,8 +213,10 @@ PSW PSW_inst0 (
     .CC_N_in(CC_N)
 );
 
+// old ram design that wasn't properly synthesized by yosys
 // 256 possible addresses, each address holds a 16-bit word
 // 8-bit address, 16-bit data, can read or write through single inout port
+/*
 ram #(   
     .MEM_WIDTH(16), 
     .MEM_DEPTH(256), 
@@ -225,6 +229,22 @@ ram #(
     .MDR_RAM_connect(MDR_RAM_connect),
     .write_data(MDR_RAM_connect),
     .RAM_REG_OUT(RAM_reg_out)
+);
+*/
+
+// new ram design improved off the old one
+ram #(   
+    .MEM_WIDTH(16), 
+    .MEM_DEPTH(4096), 
+    .INIT_FILE("ram_mem_init.txt")
+) ram_inst0 (
+    .clk(one_shot_clock),
+    .w_en(RAM_enable_write),
+    .r_en(RAM_enable_read),
+    .w_addr(MAR_to_RAM[11:0]),
+    .r_addr(MAR_to_RAM[11:0]),
+    .w_data(MDR_to_RAM),
+    .r_data(RAM_to_MDR)
 );
 
 // shifts value between Y and ALU

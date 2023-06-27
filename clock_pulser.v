@@ -1,4 +1,5 @@
-// from Phil Does Tech's tutorial video
+// from Phil Does Tech's tutorial video,
+// turns a 12 MHz clock into a debounced push-button clock
 
 module clock_pulser (
     input clk,

@@ -53,8 +53,8 @@ register GPR_0 (
     .reset(1'b1),
     .DATA(DATA),
     .REG_OUT(REG_OUT_0),  
-    .latch(GPR_latch_select[0]), 
-    .enable(GPR_enable_select[0])  
+    .latch(GPR_in & GPR_latch_select[0]), 
+    .enable(GPR_out & GPR_enable_select[0] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 
 // GPR[1] thru GPR[7] are normal
@@ -63,56 +63,56 @@ register GPR_1 (
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_1),  
-    .latch(GPR_latch_select[1]), 
-    .enable(GPR_enable_select[1])  
+    .latch(GPR_in & GPR_latch_select[1]), 
+    .enable(GPR_out & GPR_enable_select[1] & ~GPR_enable_select[0] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 register GPR_2 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_2),  
-    .latch(GPR_latch_select[2]), 
-    .enable(GPR_enable_select[2])  
+    .latch(GPR_in & GPR_latch_select[2]), 
+    .enable(GPR_out & GPR_enable_select[2] & ~GPR_enable_select[1] & ~GPR_enable_select[0] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 register GPR_3 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_3),  
-    .latch(GPR_latch_select[3]), 
-    .enable(GPR_enable_select[3])  
+    .latch(GPR_in & GPR_latch_select[3]), 
+    .enable(GPR_out & GPR_enable_select[3] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[0] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 register GPR_4 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_4),  
-    .latch(GPR_latch_select[4]), 
-    .enable(GPR_enable_select[4])  
+    .latch(GPR_in & GPR_latch_select[4]), 
+    .enable(GPR_out & GPR_enable_select[4] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[0] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 register GPR_5 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_5),  
-    .latch(GPR_latch_select[5]), 
-    .enable(GPR_enable_select[5])  
+    .latch(GPR_in & GPR_latch_select[5]), 
+    .enable(GPR_out & GPR_enable_select[5] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[0] & ~GPR_enable_select[6] & ~GPR_enable_select[7])  
 );
 register GPR_6 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_6),  
-    .latch(GPR_latch_select[6]), 
-    .enable(GPR_enable_select[6])  
+    .latch(GPR_in & GPR_latch_select[6]), 
+    .enable(GPR_out & GPR_enable_select[6] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[0] & ~GPR_enable_select[7])  
 );
 register GPR_7 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
     .REG_OUT(REG_OUT_7),  
-    .latch(GPR_latch_select[7]), 
-    .enable(GPR_enable_select[7])  
+    .latch(GPR_in & GPR_latch_select[7]), 
+    .enable(GPR_out & GPR_enable_select[7] & ~GPR_enable_select[1] & ~GPR_enable_select[2] & ~GPR_enable_select[3] & ~GPR_enable_select[4] & ~GPR_enable_select[5] & ~GPR_enable_select[6] & ~GPR_enable_select[0])  
 );
 
 // set which register is selected for input/output
@@ -133,6 +133,7 @@ end
 // enable latching/enabling of correct register in GPR
 always @( * ) begin
     if (GPR_in & ~GPR_out) begin
+        GPR_enable_select <= 8'b00000000;
         case (select_address)
             3'b000 : GPR_latch_select <= 8'b00000001;
             3'b001 : GPR_latch_select <= 8'b00000010;
@@ -145,6 +146,7 @@ always @( * ) begin
             default: GPR_latch_select <= 8'b00000000;
         endcase
     end else if (~GPR_in & GPR_out) begin
+        GPR_latch_select <= 8'b00000000;
         case (select_address)
             3'b000 : GPR_enable_select <= 8'b00000001;
             3'b001 : GPR_enable_select <= 8'b00000010;

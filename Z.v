@@ -39,9 +39,13 @@ always @(posedge clk) begin
     Z2 <= Z1;
 end
 
-assign out_to_bus = (Z_out & ~Z_in)? Z1 : 
-                    (Z_out & Z_in)? Z2 :
-                    16'bZZZZZZZZZZZZZZZZ;
+//assign out_to_bus = (Z_out & ~Z_in)? Z1 : 
+//                    (Z_out & Z_in)? Z2 :
+//                    16'bZZZZZZZZZZZZZZZZ;
+
+assign out_to_bus = (~Z_out)? 16'bZZZZZZZZZZZZZZZZ :
+                    (~Z_in)? Z1 :
+                    Z2;
 
 assign REG_OUT_Z1 = Z1;
 assign REG_OUT_Z2 = Z2;

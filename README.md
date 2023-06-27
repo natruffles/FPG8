@@ -35,7 +35,6 @@ int GPR3 = 0;
 int GPR4 = 1;
 
 while (GPR1 > 0) {
-   acc += m2;
    GPR3 = GPR3 + GPR2;
    GPR1 = GPR1 - GPR4;
 }
