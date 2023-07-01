@@ -8,8 +8,14 @@ set_io              led[0]  97
 set_io              led[3]  96
 set_io              led[2]  95
 
+# LEDs from PMOD I/O
+set_io middle 79
+set_io top_left 80
+set_io top 81
+set_io top_right 87
+set_io bottom_left 88
+set_io bottom 90
+set_io bottom_right 91
+
 # PMOD I/O
-set_io  -pullup yes top_button 78
-set_io  -pullup yes top_middle_button 79
-set_io  -pullup yes bottom_middle_button 80
-set_io  -pullup yes bottom_button 81
+set_io  -pullup yes button 78
