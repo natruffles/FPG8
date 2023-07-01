@@ -1,36 +1,36 @@
-// from Phil Does Tech's tutorial video,
-// turns a 12 MHz clock into a debounced push-button clock
-
-module clock_pulser (
+// inspired by shawn hymel's video on a metastable clock:
+// https://www.youtube.com/watch?v=dXU1py-Od1g&pp=ygUZc2hhd24gaHltZWwgbWV0YXN0YWJpbGl0eQ%3D%3D
+module clock_pulser #(
+    parameter MODULO = 3000000
+) (
     input clk,
-    input button,
-    output one_clock_pulse
+    input reset,
+    output reg clock_divided
 );
 
-// instantiation 
-/*
-clock_pulser clock_pulser_inst0 (
-    .clk(),
-    .button(),
-    .one_clock_pulse()
-);
-*/
+// Calculate number of bits needed for the counter
+localparam WIDTH = (MODULO == 1) ? 1 : $clog2(MODULO);
 
-wire pulse_debounced;
-wire one_shot_clk;
+// Internal storage elements
+reg [WIDTH-1:0] count = 0;
 
-debounce debounce_inst0 (
-    .clk(clk),
-    .sw_in(button),
-    .sw_debounced(pulse_debounced)
-);
+// acts as a pulse on every positive and negative edge of clock signal (2 pulses per clock cycle)
+wire edge_trigger;
+assign edge_trigger = (count == MODULO - 1) ? 1'b1 : 1'b0;
 
-one_shot one_shot_inst0(
-    .clk(clk),
-    .button(pulse_debounced),
-    .pulse(one_shot_clk)
-);
+// Counter resets on edge trigger
+always @ (posedge clk) begin
+    if (edge_trigger == 1'b1) begin
+        count <= 0;
+    end else begin
+        count <= count + 1;
+    end
+end
 
-assign one_clock_pulse = one_shot_clk;
-
+// edge trigger pulse switches clock from 1 to 0 and vice versa
+always @ (posedge edge_trigger) begin
+    if (reset) clock_divided <= 0;
+    clock_divided <= ~clock_divided;
+end
+    
 endmodule
