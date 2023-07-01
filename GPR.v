@@ -3,12 +3,12 @@ module GPR (
     input reset, // reset all registers to a certain value
     inout [15:0] DATA,  // in and out from bus line
     output [15:0] REG_OUT_0,  // for debugging
-    output [15:0] REG_OUT_1,
-    output [15:0] REG_OUT_2,
-    output [15:0] REG_OUT_3,
-    output [15:0] REG_OUT_4,
-    output [15:0] REG_OUT_5,
-    output [15:0] REG_OUT_6,
+    //output [15:0] REG_OUT_1,
+    //output [15:0] REG_OUT_2,
+    //output [15:0] REG_OUT_3,
+    //output [15:0] REG_OUT_4,
+    //output [15:0] REG_OUT_5,
+    //output [15:0] REG_OUT_6,
     output [15:0] REG_OUT_7,
     input GPR_in, // allows data input into register
     input GPR_out,  // allows data output onto bus
@@ -47,7 +47,7 @@ reg [7:0] GPR_latch_select;
 reg [7:0] GPR_enable_select;
 reg [2:0] select_address;
 
-// GPR[0] is special in that it always outputs 0 (garbage disposal)
+// GPR[0] is special in that it always outputs 0 to bus and is the display out register
 register GPR_0 (
     .clk(clk),
     .reset(1'b1),
@@ -57,55 +57,51 @@ register GPR_0 (
     .enable(GPR_enable_select[0])  
 );
 
-// GPR[1] thru GPR[7] are normal
-register GPR_1 (
+// GPR[1] thru GPR[6] are normal, no debug out capabilities
+register_no_debug GPR_1 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
-    .REG_OUT(REG_OUT_1),  
     .latch(GPR_latch_select[1]), 
     .enable(GPR_enable_select[1])  
 );
-register GPR_2 (
+register_no_debug GPR_2 (
     .clk(clk),
     .reset(reset),
-    .DATA(DATA),
-    .REG_OUT(REG_OUT_2),  
+    .DATA(DATA),  
     .latch(GPR_latch_select[2]), 
     .enable(GPR_enable_select[2])  
 );
-register GPR_3 (
+register_no_debug GPR_3 (
     .clk(clk),
     .reset(reset),
-    .DATA(DATA),
-    .REG_OUT(REG_OUT_3),  
+    .DATA(DATA), 
     .latch(GPR_latch_select[3]), 
     .enable(GPR_enable_select[3])  
 );
-register GPR_4 (
+register_no_debug GPR_4 (
     .clk(clk),
     .reset(reset),
-    .DATA(DATA),
-    .REG_OUT(REG_OUT_4),  
+    .DATA(DATA), 
     .latch(GPR_latch_select[4]), 
     .enable(GPR_enable_select[4])  
 );
-register GPR_5 (
+register_no_debug GPR_5 (
     .clk(clk),
     .reset(reset),
-    .DATA(DATA),
-    .REG_OUT(REG_OUT_5),  
+    .DATA(DATA), 
     .latch(GPR_latch_select[5]), 
     .enable(GPR_enable_select[5])  
 );
-register GPR_6 (
+register_no_debug GPR_6 (
     .clk(clk),
     .reset(reset),
     .DATA(DATA),
-    .REG_OUT(REG_OUT_6),  
     .latch(GPR_latch_select[6]), 
     .enable(GPR_enable_select[6])  
 );
+
+// Also functions as program counter, has reg out capabilities
 register GPR_7 (
     .clk(clk),
     .reset(reset),

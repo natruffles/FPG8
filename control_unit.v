@@ -6,7 +6,6 @@ module control_unit (
     input [2:0] IR_Rs2,
     input timeout,
     input [15:0] instruction,
-    output [4:0] REG_OUT_CONTROL_UNIT,
     output [2:0] ALU_control,
     output con_ROM_out,
     output GPR_in,
@@ -40,7 +39,6 @@ control_unit control_unit_inst0 (
     .IR_Rs2(),
     .timeout(),
     .instruction(),
-    .REG_OUT_CONTROL_UNIT(),
     .ALU_control(),
     .con_ROM_out(),
     .GPR_in(),
@@ -66,7 +64,7 @@ control_unit control_unit_inst0 (
 */
 
 // all states labelled
-localparam STATE_F1     = 5'h0;
+localparam STATE_F1     = 5'h1F;
 localparam STATE_F2     = 5'h1;
 localparam STATE_F3     = 5'h2;
 localparam STATE_E11_1       = 5'h3;
@@ -97,7 +95,7 @@ localparam STATE_PCV5       = 5'h1B;
 localparam STATE_PCV6       = 5'h1C;
 localparam STATE_PCV7       = 5'h1D;
 localparam STATE_PCV8       = 5'h1E;
-localparam STATE_IDLE       = 5'h1F;
+localparam STATE_IDLE       = 5'h0;
 
 // used to store the current state of the control unit
 reg [4:0] state;
@@ -285,7 +283,5 @@ assign ALU_control[0] = (ALU_and | ALU_invert_bus_input | ALU_pass_Y | ALU_add_d
 assign GPR_select[2] = (GPR_select_Rs1 | GPR_select_Rs2);
 assign GPR_select[1] = (GPR_select_Rd_1 | GPR_select_Rd_2);
 assign GPR_select[0] = (GPR_select_PC | GPR_select_Rd_2 | GPR_select_Rs2);
-
-assign REG_OUT_CONTROL_UNIT = state;
 
 endmodule
