@@ -190,6 +190,7 @@ PSW PSW_inst0 (
     .REG_OUT_PSW(PSW_reg_out), 
     .latch(PSW_in), 
     .enable(PSW_out), 
+    .Z_in(Z_in),
     .IR_opcode(opcode),
     .IR_S(S),
     .ALU_control(ALU_control),

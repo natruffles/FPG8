@@ -79,9 +79,9 @@ Decrement MM[0xFF] by 1
 //PC = GPR[0] + 5 = 5
 //Go to the BRZ instruction
 
-BR 253 (PC = 8)
-PC = PC + 253 = 8 + 253 = 261 % 256 = 5
-Go to the BRZ instruction, 256 RAM addresses cause MAR = RAM % 256
+BR 65533 (PC = 8)
+PC = PC + 65533 = 8 + 65533 = 65541 % 4096 = 5
+Go to the BRZ instruction, 4096 RAM addresses cause MAR = RAM % 4096
 
 ST 3 244 (PC = 9)
 MM[9 + 244] = MM[253] = GPR[3]
@@ -100,7 +100,7 @@ The instructions above and the data that the instructions work with has to fit o
 5 1010 000 000000100
 6 0000 0 00 011 011 010
 7 0001 1 00 001 001 100
-8 1011 000 011111101
+8 1011 000 111111101
 9 1000 011 011110100
 10 0000 0 00 000 000 000
 ...
@@ -141,3 +141,17 @@ If a program check violation occurs when attempting to execute CLK or LPSW while
 When executing the above sample program, assuming two nonzero numbers are multiplied, the first six instructions are always executed and take a total of 28 clock cycles. Then, the next four instructions (PC 6,7,8,5) are executed x times, where x = GPR[1](initial); the four instructions take 21 clock cycles. In order to decrease the average program execution time dramatically, the value stored in 0xFF in RAM should be smaller in magnitude than the value stored in 0xFE. Then, the last two instructions are executed and take a total of 8 clock cycles. 
 
 The execution time for the program is 28 + 8 + 21*x = **36 + 21 * 0xFE** clock cycles.
+
+## Update 7/1/2023
+
+Many changes needed to be made to load the soft-core processor from simulation onto the FPGA hardware. I encountered many Yosys (synthesizer) errors that were not caught during simulation. After hours of looking through obscure questions on StackOverflow as well as consulting the Yosys manual, I was able to load the processor onto the FPGA, controlled by a physical reset and clock button. To confirm more functions of the processor rather than "it works", I would like to establish UART communication with the connected PC in the future.
+
+To verify that my program runs as intended on the FPGA, I created the following test setup:
+1. Set my program clock variable MODULO = 20000, which means that each clock cycle takes (20000 * 2) / 12,000,000 = 0.00333 seconds
+2. Calculated using the formula above for execution time that my program should take 36 + 21 * 69 = 1485 clock cycles to complete
+3. Calculated that my program should take 0.00333 seconds * 1485 clock cycles ~ 4.95 seconds to execute on the hardware.
+4. Uploaded my program to the FPGA, while holding the reset button
+5. Timed how long it took from releasing the reset button to the program counter LEDs to stop quickly flashing (meaning program has reached end and processor has reached idle state)
+
+I timed 4.78 seconds, which is very close to the theoretical time of 4.95 seconds. Awesome!
+

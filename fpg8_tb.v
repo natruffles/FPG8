@@ -8,19 +8,9 @@ reg reset = 0;
 
 // bus wire and register to drive the bus
 wire [15:0] w_bus;
-// w_drive_r does not have functionality of typical registers,
-// control functionality handled in code
-reg [15:0] w_drive_r;
 
 // output debugging registers
-wire [15:0] reg_out;  // for debug register lol
 wire [15:0] GPR_reg_out_0;
-wire [15:0] GPR_reg_out_1;
-wire [15:0] GPR_reg_out_2;
-wire [15:0] GPR_reg_out_3;
-wire [15:0] GPR_reg_out_4;
-wire [15:0] GPR_reg_out_5;
-wire [15:0] GPR_reg_out_6;
 wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
 wire [15:0] Y_reg_out;
@@ -28,8 +18,7 @@ wire [15:0] ALU_reg_out;
 wire [15:0] Z1_reg_out;
 wire [15:0] Z2_reg_out;
 wire [15:0] timer_reg_out;
-wire [15:0] PSW_reg_out;
-wire [4:0] control_unit_reg_out;
+wire [2:0] PSW_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 wire [15:0] RAM_reg_out;
@@ -83,11 +72,10 @@ control_unit control_unit_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
     .opcode(opcode),
-    .PSW_bits(PSW_reg_out[2:0]),
+    .PSW_bits(PSW_reg_out),
     .IR_Rs2(rs_2),
     .timeout(timeout),
     .instruction(IR_reg_out),
-    .REG_OUT_CONTROL_UNIT(control_unit_reg_out),
     .ALU_control(ALU_control),
     .con_ROM_out(con_ROM_out),
     .GPR_in(GPR_in),
@@ -140,12 +128,6 @@ GPR GPR_inst0 (
     .reset(reset),
     .DATA(w_bus), 
     .REG_OUT_0(GPR_reg_out_0),  
-    .REG_OUT_1(GPR_reg_out_1), 
-    .REG_OUT_2(GPR_reg_out_2), 
-    .REG_OUT_3(GPR_reg_out_3), 
-    .REG_OUT_4(GPR_reg_out_4), 
-    .REG_OUT_5(GPR_reg_out_5), 
-    .REG_OUT_6(GPR_reg_out_6), 
     .REG_OUT_7(GPR_reg_out_7), 
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
@@ -198,6 +180,7 @@ MDR MDR_inst0 (
     .read_from_MM(RAM_enable_read)
 );
 
+// contains condition codes and privileged bit
 PSW PSW_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
@@ -205,9 +188,9 @@ PSW PSW_inst0 (
     .REG_OUT_PSW(PSW_reg_out), 
     .latch(PSW_in), 
     .enable(PSW_out), 
+    .Z_in(Z_in),
     .IR_opcode(opcode),
     .IR_S(S),
-    .Z_in(Z_in),
     .ALU_control(ALU_control),
     .CC_Z_in(CC_Z),
     .CC_N_in(CC_N)
@@ -216,33 +199,17 @@ PSW PSW_inst0 (
 // old ram design that wasn't properly synthesized by yosys
 // 256 possible addresses, each address holds a 16-bit word
 // 8-bit address, 16-bit data, can read or write through single inout port
-/*
-ram #(   
-    .MEM_WIDTH(16), 
-    .MEM_DEPTH(256), 
-    .INIT_FILE("ram_mem_init.txt")
-) ram_inst0 (
-    .clk(one_shot_clock),
-    .w_en(RAM_enable_write),
-    .r_en(RAM_enable_read),
-    .addr(MAR_to_RAM[7:0]),
-    .MDR_RAM_connect(MDR_RAM_connect),
-    .write_data(MDR_RAM_connect),
-    .RAM_REG_OUT(RAM_reg_out)
-);
-*/
 
 // new ram design improved off the old one
+// 4096 possible addresses, each address holds a 16-bit word
+// 12-bit address, 16-bit data, can read or write but not both
 ram #(   
-    .MEM_WIDTH(16), 
-    .MEM_DEPTH(4096), 
     .INIT_FILE("ram_mem_init.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
     .r_en(RAM_enable_read),
-    .w_addr(MAR_to_RAM[11:0]),
-    .r_addr(MAR_to_RAM[11:0]),
+    .addr(MAR_to_RAM[11:0]),
     .w_data(MDR_to_RAM),
     .r_data(RAM_to_MDR)
 );
@@ -302,6 +269,10 @@ always begin
 end
 
 initial begin
+    reset = 1;
+    #(2 * 41.67)
+    reset = 0;
+    #(200000 - 2*41.67)
     reset = 1;
     #(2 * 41.67)
     reset = 0;

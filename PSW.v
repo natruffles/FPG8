@@ -5,6 +5,7 @@ module PSW (
     output [2:0] REG_OUT_PSW, 
     input latch, 
     input enable, 
+    input Z_in,
     input [3:0] IR_opcode,
     input IR_S,
     input [2:0] ALU_control,
@@ -21,6 +22,7 @@ PSW PSW_inst0 (
     .REG_OUT_PSW(), 
     .latch(), 
     .enable(), 
+    .Z_in(),
     .IR_opcode(),
     .IR_S(),
     .ALU_control(),
@@ -42,7 +44,7 @@ always @(posedge clk) begin
         r <= 0;
     end else if (latch) begin
         r <= DATA;
-    end else if (IR_opcode >= 0 && IR_opcode <= 5 && IR_S && ALU_control != 3'b111 & ALU_control != 3'b010) begin
+    end else if (IR_opcode >= 0 && IR_opcode <= 5 && Z_in && IR_S && ALU_control != 3'b111 & ALU_control != 3'b010) begin
         r[0] <= CC_Z_in;
         r[1] <= CC_N_in;
     end
