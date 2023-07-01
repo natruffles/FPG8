@@ -75,10 +75,6 @@ SUB 1 1 4 (PC = 7)
 GPR[1] = GPR[1] - GPR[4]
 Decrement MM[0xFF] by 1
 
-//RTS 0 5 (PC = 8)
-//PC = GPR[0] + 5 = 5
-//Go to the BRZ instruction
-
 BR 65533 (PC = 8)
 PC = PC + 65533 = 8 + 65533 = 65541 % 4096 = 5
 Go to the BRZ instruction, 4096 RAM addresses cause MAR = RAM % 4096
@@ -155,3 +151,93 @@ To verify that my program runs as intended on the FPGA, I created the following 
 
 I timed 4.78 seconds, which is very close to the theoretical time of 4.95 seconds. Awesome!
 
+Moving onto another form of output: a 7-segment display.
+![](https://github.com/natruffles/FPG8/blob/main/images/hardwareV1.jpg?raw=true)
+In the above picture, note how all 8 of the P-MOD I/O connections on the FPGA are used, 1 for the reset button and 7 for the 7-segment display.
+
+The 7 low-order bits of GPR[1] (display register) will be mapped to the following segments like so:
+|Segment Position |Register Bit|
+|-----|--------|
+|top-left|GPR[1][6]    |
+|top|GPR[1][5]    |
+|top-right|GPR[1][4]    |
+|middle|GPR[1][3]    |
+|bottom-left|GPR[1][2]    |
+|bottom|GPR[1][1]    |
+|bottom-right|GPR[1][0]    |
+
+This results in the following representations for outputting 10 decimal numbers to the 7-segment display
+|Decimal Number Output |Contents of GPR[1]| Hex representation
+|-----|--------|
+|0|0000000001110111    | 0x77 |
+|1|0000000000010001    | 0x11   |
+|2|0000000000111110    | 0x3E   |
+|3|0000000000111011    | 0x3B   |
+|4|0000000001011001    | 0x59   |
+|5|0000000001101011    | 0x6B   |
+|6|0000000001101111    | 0x6F   |
+|7|0000000000110001    | 0x31   |
+|8|0000000001111111    | 0x7F   |
+|9|0000000001111011    | 0x7B   |
+
+A quick and efficient way to display these numbers is to use the LDI instruction which will save space in RAM by putting the data that the instruction is acting on in one instruction.
+
+```
+LDI 1 0x77 (PC = 0)
+GPR[1] = 0x77
+GPR 1 will display the value 0 (store 0x77)
+
+LDI 1 0x11 (PC = 1)
+GPR[1] = 0x11
+GPR 1 will display the value 1 (store 0x11)
+
+LDI 1 0x3E (PC = 2)
+GPR[1] = 0x3E
+GPR 1 will display the value 2 (store 0x3E)
+
+LDI 1 0x3B (PC = 3)
+GPR[1] = 0x3B
+GPR 1 will display the value 3 (store 0x3B)
+
+LDI 1 0x59 (PC = 4)
+GPR[1] = 0xF9
+GPR 1 will display the value 4 (store 0xF9)
+
+LDI 1 0x6B (PC = 5)
+GPR[1] = 0x6B
+GPR 1 will display the value 5 (store 0x6B)
+
+LDI 1 0x6F (PC = 6)
+GPR[1] = 0x6F
+GPR 1 will display the value 6 (store 0x6F)
+
+LDI 1 0x31 (PC = 7)
+GPR[1] = 0x31
+GPR 1 will display the value 7 (store 0x31)
+
+LDI 1 0x7F (PC = 8)
+GPR[1] = 0x7F
+GPR 1 will display the value 8 (store 0x7F)
+
+LDI 1 0x7B (PC = 9)
+GPR[1] = 0x7B
+GPR 1 will display the value 9 (store 0x7B)
+
+RTS 0 0 (PC = 8)
+PC = GPR[0] + 0 = 0
+Go to PC = 0
+```
+And here is how this program will look in binary:
+```
+0 0110 001 001110111
+1 0110 001 000010001
+2 0110 001 000111110
+3 0110 001 000111011
+4 0110 001 001011001
+5 0110 001 001101011
+6 0110 001 001101111
+7 0110 001 000110001
+8 0110 001 001111111
+9 0110 001 001111011
+10 1101 000 000000000
+```

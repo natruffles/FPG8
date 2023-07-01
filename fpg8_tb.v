@@ -204,7 +204,7 @@ PSW PSW_inst0 (
 // 4096 possible addresses, each address holds a 16-bit word
 // 12-bit address, 16-bit data, can read or write but not both
 ram #(   
-    .INIT_FILE("ram_mem_init.txt")
+    .INIT_FILE("multiply_program.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),

@@ -12,7 +12,7 @@ wire reset = ~button;
 wire [15:0] w_bus;
 
 // output debugging registers
-wire [15:0] GPR_reg_out_0;
+wire [15:0] GPR_reg_out_1;
 wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
 wire [15:0] Y_reg_out;
@@ -129,7 +129,7 @@ GPR GPR_inst0 (
     .clk(one_shot_clock), 
     .reset(reset),
     .DATA(w_bus), 
-    .REG_OUT_0(GPR_reg_out_0),  
+    .REG_OUT_1(GPR_reg_out_1),  
     .REG_OUT_7(GPR_reg_out_7), 
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
@@ -206,7 +206,7 @@ PSW PSW_inst0 (
 // 4096 possible addresses, each address holds a 16-bit word
 // 12-bit address, 16-bit data, can read or write but not both
 ram #(   
-    .INIT_FILE("ram_mem_init.txt")
+    .INIT_FILE("print_digits.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
@@ -274,14 +274,13 @@ leds_out leds_out_inst0(
     .leds(led)
 );
 
-
-// outputs the lowest 7-order bits of GPR[0] (display-out register) to 7seg display
-assign top_left = GPR_reg_out_7[3];
-assign top = GPR_reg_out_7[2];
-assign top_right = GPR_reg_out_7[1];
-assign middle = GPR_reg_out_7[0];
-assign bottom_left = GPR_reg_out_7[2];
-assign bottom = GPR_reg_out_7[1];
-assign bottom_right = GPR_reg_out_7[0];
+// outputs the lowest 7-order bits of GPR[1] (display-out register) to 7seg display
+assign top_left = GPR_reg_out_1[6];
+assign top = GPR_reg_out_1[5];
+assign top_right = GPR_reg_out_1[4];
+assign middle = GPR_reg_out_1[3];
+assign bottom_left = GPR_reg_out_1[2];
+assign bottom = GPR_reg_out_1[1];
+assign bottom_right = GPR_reg_out_1[0];
 
 endmodule
