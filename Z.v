@@ -4,8 +4,6 @@ module Z (
     input clk,
     input reset,
     input [15:0] from_ALU,
-    output [15:0] REG_OUT_Z1,  // for debugging
-    output [15:0] REG_OUT_Z2,  // for debugging
     output [15:0] out_to_bus,
     input Z_in,
     input Z_out
@@ -17,8 +15,6 @@ Z Z_inst0 (
     .clk(),
     .reset(),
     .from_ALU(),
-    .REG_OUT_Z1(), 
-    .REG_OUT_Z2(),
     .out_to_bus(),
     .Z_in(),
     .Z_out()
@@ -46,8 +42,5 @@ end
 assign out_to_bus = (~Z_out)? 16'bZZZZZZZZZZZZZZZZ :
                     (~Z_in)? Z1 :
                     Z2;
-
-assign REG_OUT_Z1 = Z1;
-assign REG_OUT_Z2 = Z2;
 
 endmodule

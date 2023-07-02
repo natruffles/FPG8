@@ -17,10 +17,7 @@ wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
 wire [15:0] Y_reg_out;
 wire [15:0] ALU_reg_out;
-wire [15:0] Z1_reg_out;
-wire [15:0] Z2_reg_out;
-wire [15:0] timer_reg_out;
-wire [2:0] PSW_reg_out;
+wire [1:0] PSW_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 wire [15:0] RAM_reg_out;
@@ -48,7 +45,6 @@ wire CC_Z;
 
 // control signal index;
 wire [2:0] ALU_control;
-wire con_ROM_out;
 wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
@@ -56,12 +52,8 @@ wire IR_in;
 wire MAR_in;
 wire MDR_in;
 wire MDR_out;
-wire PSW_in;
-wire PSW_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
-wire timer_in;
-wire timeout;
 wire Y_in;
 wire Y_out;
 wire Y_offset_in;
@@ -73,13 +65,9 @@ wire Z_out;
 control_unit control_unit_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
-    .opcode(opcode),
     .PSW_bits(PSW_reg_out),
-    .IR_Rs2(rs_2),
-    .timeout(timeout),
     .instruction(IR_reg_out),
     .ALU_control(ALU_control),
-    .con_ROM_out(con_ROM_out),
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
     .GPR_select(GPR_select),
@@ -87,11 +75,8 @@ control_unit control_unit_inst0 (
     .MAR_in(MAR_in),
     .MDR_in(MDR_in),
     .MDR_out(MDR_out),
-    .PSW_in(PSW_in),
-    .PSW_out(PSW_out),
     .RAM_enable_read(RAM_enable_read),
     .RAM_enable_write(RAM_enable_write),
-    .timer_in(timer_in),
     .Y_in(Y_in),
     .Y_out(Y_out),
     .Y_offset_in(Y_offset_in),
@@ -115,13 +100,6 @@ comparator comparator_inst0 (
     .from_ALU(ALU_reg_out),
     .CC_Z(CC_Z),
     .CC_N(CC_N)
-);
-
-// outputs value of "8" to the bus when enabled
-constant_ROM constant_ROM_inst0 (
-    .DATA(w_bus),
-    .reset_to_constant_val(reset),
-    .enable(con_ROM_out)
 );
 
 // Eight 16-bit general purpose registers
@@ -186,10 +164,7 @@ MDR MDR_inst0 (
 PSW PSW_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
-    .DATA(w_bus),  
     .REG_OUT_PSW(PSW_reg_out), 
-    .latch(PSW_in), 
-    .enable(PSW_out), 
     .Z_in(Z_in),
     .IR_opcode(opcode),
     .IR_S(S),
@@ -225,17 +200,6 @@ shifter shifter_inst0 (
     .shift_amount(shift)
 );
 
-// generates timeout signal when timer counts down to 0
-// timeout signal will remain high until timer value is reset, input with nonzero value
-timer timer_inst0 (
-    .clk(one_shot_clock),
-    .reset(reset), 
-    .DATA(w_bus), 
-    .REG_OUT_TIMER(timer_reg_out), 
-    .timer_in(timer_in),
-    .timeout(timeout)
-);
-
 // input register for ALU (other input is bus)
 Y Y_inst0 (
     .clk(one_shot_clock),
@@ -253,8 +217,6 @@ Z Z_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
     .from_ALU(ALU_reg_out),
-    .REG_OUT_Z1(Z1_reg_out), 
-    .REG_OUT_Z2(Z2_reg_out),
     .out_to_bus(w_bus),
     .Z_in(Z_in),
     .Z_out(Z_out)

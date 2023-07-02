@@ -1,13 +1,9 @@
 module control_unit (
     input clk,
     input reset,
-    input [3:0] opcode,
-    input [2:0] PSW_bits,
-    input [2:0] IR_Rs2,
-    input timeout,
+    input [1:0] PSW_bits,
     input [15:0] instruction,
     output [2:0] ALU_control,
-    output con_ROM_out,
     output GPR_in,
     output GPR_out,
     output [2:0] GPR_select,
@@ -15,11 +11,8 @@ module control_unit (
     output MAR_in,
     output MDR_in,
     output MDR_out,
-    output PSW_in,
-    output PSW_out,
     output RAM_enable_read,
     output RAM_enable_write,
-    output timer_in,
     output Y_in,
     output Y_out,
     output Y_offset_in,
@@ -34,13 +27,9 @@ module control_unit (
 control_unit control_unit_inst0 (
     .clk(),
     .reset(),
-    .opcode(),
     .PSW_bits(),
-    .IR_Rs2(),
-    .timeout(),
     .instruction(),
     .ALU_control(),
-    .con_ROM_out(),
     .GPR_in(),
     .GPR_out(),
     .GPR_select(),
@@ -48,11 +37,8 @@ control_unit control_unit_inst0 (
     .MAR_in(),
     .MDR_in(),
     .MDR_out(),
-    .PSW_in(),
-    .PSW_out(),
     .RAM_enable_read(),
     .RAM_enable_write(),
-    .timer_in(),
     .Y_in(),
     .Y_out(),
     .Y_offset_in(),
@@ -62,6 +48,10 @@ control_unit control_unit_inst0 (
     .Z_out()
 );
 */
+
+wire [3:0] opcode; wire [2:0] IR_Rs2;
+assign opcode = instruction[15:12];
+assign IR_Rs2 = instruction[2:0];
 
 // all states labelled
 localparam STATE_F1     = 5'h1F;
@@ -102,10 +92,9 @@ wire ALU_or; wire ALU_pass_Y;
 wire ALU_subtract; wire ALU_add_decrement;
 
 // give PSW bits readable names
-wire CC_N; wire CC_Z; wire privileged;
+wire CC_N; wire CC_Z;
 assign CC_Z = PSW_bits[0];
 assign CC_N = PSW_bits[1];
-assign privileged = PSW_bits[2];
 
 always @ (posedge clk) begin
     // On reset, return to idle state
