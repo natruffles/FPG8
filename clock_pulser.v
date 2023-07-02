@@ -1,7 +1,7 @@
 // inspired by shawn hymel's video on a metastable clock:
 // https://www.youtube.com/watch?v=dXU1py-Od1g&pp=ygUZc2hhd24gaHltZWwgbWV0YXN0YWJpbGl0eQ%3D%3D
 module clock_pulser #(
-    parameter MODULO = 3000000
+    parameter MODULO = 300000
 ) (
     input clk,
     input reset,

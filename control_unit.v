@@ -84,15 +84,6 @@ localparam STATE_E4_1       = 5'h12;
 localparam STATE_D5A       = 5'h13;
 localparam STATE_D5B       = 5'h14;
 localparam STATE_E0_3       = 5'h15;
-localparam STATE_PCV1       = 5'h16;
-localparam STATE_T1       = 5'h17;
-localparam STATE_PCV2       = 5'h18;
-localparam STATE_PCV3       = 5'h19;
-localparam STATE_PCV4       = 5'h1A;
-localparam STATE_PCV5       = 5'h1B;
-localparam STATE_PCV6       = 5'h1C;
-localparam STATE_PCV7       = 5'h1D;
-localparam STATE_PCV8       = 5'h1E;
 localparam STATE_IDLE       = 5'h0;
 
 // used to store the current state of the control unit
@@ -161,14 +152,8 @@ always @ (posedge clk) begin
                     state <= STATE_D5A;
                 end else if (opcode == 5 && IR_Rs2 != 0) begin
                     state <= STATE_D5B;
-                end else if ((opcode == 9 && !CC_N) || (opcode == 10 && !CC_Z)) begin
-                    if (privileged || (!privileged && !timeout)) begin
-                        state <= STATE_F1;
-                    end else begin
-                        state <= STATE_T1;
-                    end
-                end else begin
-                    state <= STATE_PCV1;
+                end else begin //if ((opcode == 9 && !CC_N) || (opcode == 10 && !CC_Z)) begin
+                    state <= STATE_F1;
                 end
             end
             
@@ -177,11 +162,7 @@ always @ (posedge clk) begin
             STATE_E7_2,
             STATE_E8_2,
             STATE_E0_3: begin
-                if (privileged || (!privileged && !timeout)) begin
-                        state <= STATE_F1;
-                end else begin
-                    state <= STATE_T1;
-                end
+                state <= STATE_F1;
             end
 
             STATE_E12_1: state <= STATE_E12_2;
@@ -216,16 +197,6 @@ always @ (posedge clk) begin
             STATE_E4_1,
             STATE_D5A,
             STATE_D5B: state <= STATE_E0_3;
-
-            STATE_PCV1,
-            STATE_T1: state <= STATE_PCV2;
-            STATE_PCV2: state <= STATE_PCV3;
-            STATE_PCV3: state <= STATE_PCV4;
-            STATE_PCV4: state <= STATE_PCV5;
-            STATE_PCV5: state <= STATE_PCV6;
-            STATE_PCV6: state <= STATE_PCV7;
-            STATE_PCV7: state <= STATE_PCV8;
-            STATE_PCV8: state <= STATE_F1;
             
             // Go to initial fetch if in unknown state
             default: state <= STATE_IDLE;
@@ -236,36 +207,36 @@ end
 // assign control signals 
 assign ALU_add = (state == STATE_E13_1 || state == STATE_E0_2);
 assign ALU_and = (state == STATE_E2_2);
-assign ALU_inc_Y_1 = (state == STATE_F1 || state == STATE_PCV2 || state == STATE_PCV4 || state == STATE_PCV6);
+assign ALU_inc_Y_1 = (state == STATE_F1);
 assign ALU_invert_bus_input = (state == STATE_E4_1);
 assign ALU_or = (state == STATE_E3_2);
 assign ALU_pass_Y = (state == STATE_D5A || state == STATE_D5B);
 assign ALU_subtract = (state == STATE_E1_2);
 assign ALU_add_decrement = (state == STATE_F3);
-assign con_ROM_out = (state == STATE_T1);
-assign GPR_in = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_2 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_PCV8 || state == STATE_E0_3);
-assign GPR_out = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_E13_1 || state == STATE_E8_2 || state == STATE_PCV1 || state == STATE_PCV4 || state == STATE_E0_1 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
-assign GPR_select_0 = (state == STATE_PCV1);
-assign GPR_select_PC = (state == STATE_F1 || state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_1 || state == STATE_PCV4 || state == STATE_PCV8);
+// con_ROM_out is an unused control signal!
+assign GPR_in = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_2 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_E0_3);
+assign GPR_out = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_E13_1 || state == STATE_E8_2 || state == STATE_E0_1 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
+// GPR_select_0 is an unused control signal!
+assign GPR_select_PC = (state == STATE_F1 || state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_1);
 assign GPR_select_Rd_1 = (state == STATE_E0_3);
 assign GPR_select_Rd_2 = (state == STATE_E12_2 || state == STATE_E13_1 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_E8_2);
 assign GPR_select_Rs1 = (state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
 assign GPR_select_Rs2 = (state == STATE_E0_1);
 assign IR_in = (state == STATE_F2);
-assign MAR_in = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_PCV1 || state == STATE_PCV3 || state == STATE_PCV5 || state == STATE_PCV7 || state == STATE_T1);
-assign MDR_in = (state == STATE_E8_2 || state == STATE_PCV2 || state == STATE_PCV4);
-assign MDR_out = (state == STATE_F2 || state == STATE_E7_2 || state == STATE_PCV6 || state == STATE_PCV8);
-assign PSW_in = state == STATE_PCV6;
-assign PSW_out = (state == STATE_PCV2);
-assign RAM_enable_read = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_PCV5 || state == STATE_PCV7);
-assign RAM_enable_write = (state == STATE_E8_2 || state == STATE_PCV2 || state == STATE_PCV4);
-assign Y_in = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_PCV1 || state == STATE_PCV3 || state == STATE_PCV5 || state == STATE_T1 || state == STATE_E0_1 || state == STATE_D5A || state == STATE_D5B);
+assign MAR_in = (state == STATE_F1 || state == STATE_E7_1);
+assign MDR_in = (state == STATE_E8_2);
+assign MDR_out = (state == STATE_F2 || state == STATE_E7_2);
+// PSW_in is an unused control signal!
+// PSW_out is an unused control signal!
+assign RAM_enable_read = (state == STATE_F1 || state == STATE_E7_1);
+assign RAM_enable_write = (state == STATE_E8_2);
+assign Y_in = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_E0_1 || state == STATE_D5A || state == STATE_D5B);
 assign Y_out = (state == STATE_E12_2 || state == STATE_E6_1);
 assign Y_offset_in = (state == STATE_F2);
 assign Y_shift_left = (state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_D5A);
 assign Y_shift_right = (state == STATE_D5B);
-assign Z_in = (state == STATE_F1 || state == STATE_F3 || state == STATE_E13_1 || state == STATE_PCV2 || state == STATE_PCV4 || state == STATE_PCV6 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
-assign Z_out = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_PCV3 || state == STATE_PCV5 || state == STATE_PCV7 || state == STATE_E0_3 || state == STATE_E7_1);
+assign Z_in = (state == STATE_F1 || state == STATE_F3 || state == STATE_E13_1 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
+assign Z_out = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_E0_3 || state == STATE_E7_1);
 
 // combine ALU and GPR assignments, priority encode them
 assign ALU_control[2] = (ALU_or | ALU_pass_Y | ALU_subtract | ALU_add_decrement);
