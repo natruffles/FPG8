@@ -75,8 +75,6 @@ localparam STATE_E6_1       = 5'h7;
 localparam STATE_E7_1       = 5'h8;
 localparam STATE_E7_2       = 5'h9;
 localparam STATE_E8_2       = 5'hA;
-localparam STATE_E14_2       = 5'hB;
-localparam STATE_E15_2       = 5'hC;
 localparam STATE_E0_1       = 5'hD;
 localparam STATE_E0_2       = 5'hE;
 localparam STATE_E1_2       = 5'hF;
@@ -148,7 +146,7 @@ always @ (posedge clk) begin
                     state <= STATE_E13_1;
                 end else if (opcode == 6) begin
                     state <= STATE_E6_1;
-                end else if (((opcode == 14 || opcode == 15) && privileged) || opcode == 7 || opcode == 8) begin
+                end else if (opcode == 7 || opcode == 8) begin
                     state <= STATE_E7_1;
                 end else if (opcode >= 0 && opcode <= 3) begin
                     if (instruction == 16'b0000000000000000) begin
@@ -178,8 +176,6 @@ always @ (posedge clk) begin
             STATE_E6_1,
             STATE_E7_2,
             STATE_E8_2,
-            STATE_E14_2,
-            STATE_E15_2,
             STATE_E0_3: begin
                 if (privileged || (!privileged && !timeout)) begin
                         state <= STATE_F1;
@@ -196,13 +192,9 @@ always @ (posedge clk) begin
             STATE_E7_1: begin
                 if (opcode == 7) begin
                     state <= STATE_E7_2;
-                end else if (opcode == 8) begin
+                end else begin // opcode = 8
                     state <= STATE_E8_2;
-                end else if (opcode == 14) begin
-                    state <= STATE_E14_2;
-                end else begin // opcode == 15
-                    state <= STATE_E15_2;
-                end 
+                end
             end
 
             STATE_E0_1: begin
@@ -262,12 +254,11 @@ assign GPR_select_Rs2 = (state == STATE_E0_1);
 assign IR_in = (state == STATE_F2);
 assign MAR_in = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_PCV1 || state == STATE_PCV3 || state == STATE_PCV5 || state == STATE_PCV7 || state == STATE_T1);
 assign MDR_in = (state == STATE_E8_2 || state == STATE_PCV2 || state == STATE_PCV4);
-assign MDR_out = (state == STATE_F2 || state == STATE_E7_2 || state == STATE_E14_2 || state == STATE_E15_2 || state == STATE_PCV6 || state == STATE_PCV8);
-assign PSW_in = (state == STATE_E15_2 || state == STATE_PCV6);
+assign MDR_out = (state == STATE_F2 || state == STATE_E7_2 || state == STATE_PCV6 || state == STATE_PCV8);
+assign PSW_in = state == STATE_PCV6;
 assign PSW_out = (state == STATE_PCV2);
 assign RAM_enable_read = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_PCV5 || state == STATE_PCV7);
 assign RAM_enable_write = (state == STATE_E8_2 || state == STATE_PCV2 || state == STATE_PCV4);
-assign timer_in = (state == STATE_E14_2);
 assign Y_in = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_PCV1 || state == STATE_PCV3 || state == STATE_PCV5 || state == STATE_T1 || state == STATE_E0_1 || state == STATE_D5A || state == STATE_D5B);
 assign Y_out = (state == STATE_E12_2 || state == STATE_E6_1);
 assign Y_offset_in = (state == STATE_F2);
