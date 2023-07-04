@@ -3,16 +3,21 @@ module control_unit (
     input reset,
     input [1:0] PSW_bits,
     input [15:0] instruction,
+    input uart_done,
     output [2:0] ALU_control,
     output GPR_in,
     output GPR_out,
     output [2:0] GPR_select,
     output IR_in,
+    output IR_out,
     output MAR_in,
     output MDR_in,
     output MDR_out,
     output RAM_enable_read,
     output RAM_enable_write,
+    output uart_in_and_send,
+    output uart_out,
+    output uart_receive,
     output Y_in,
     output Y_out,
     output Y_offset_in,
@@ -29,16 +34,21 @@ control_unit control_unit_inst0 (
     .reset(),
     .PSW_bits(),
     .instruction(),
+    .uart_done(),
     .ALU_control(),
     .GPR_in(),
     .GPR_out(),
     .GPR_select(),
     .IR_in(),
+    .IR_out(),
     .MAR_in(),
     .MDR_in(),
     .MDR_out(),
     .RAM_enable_read(),
     .RAM_enable_write(),
+    .uart_in_and_send(),
+    .uart_out(),
+    .uart_receive(),
     .Y_in(),
     .Y_out(),
     .Y_offset_in(),
@@ -75,12 +85,28 @@ localparam STATE_D5A       = 5'h13;
 localparam STATE_D5B       = 5'h14;
 localparam STATE_E0_3       = 5'h15;
 localparam STATE_IDLE       = 5'h0;
+localparam STATE_E14_1 = 5'hB;
+localparam STATE_E15_1 = 5'hC;
+localparam STATE_E14_3 = 5'h16;
+localparam STATE_E15_2 = 5'h17;
+localparam STATE_E14OR15_WAIT = 5'h18;
+
+// remaining possible states
+//localparam  = 5'h19;
+//localparam  = 5'h1A;
+//localparam  = 5'h1B;
+//localparam  = 5'h1C;
+//localparam  = 5'h1D;
+//localparam  = 5'h1E;
 
 // used to store the current state of the control unit
 reg [4:0] state;
 
 // put processor in infinite loop once this flag goes high
 reg done_flag;
+
+// used to differentiate if sending or receiving with uart, is high if receiving
+reg rx;
 
 // inbetween wires that will be combined into GPR_select and ALU_select
 wire GPR_select_0; wire GPR_select_PC;
@@ -101,6 +127,7 @@ always @ (posedge clk) begin
     if (reset == 1'b1) begin
         state <= STATE_IDLE;
         done_flag <= 0;
+        rx <= 0;
         
     // Define the state transitions
     end else begin
@@ -118,12 +145,17 @@ always @ (posedge clk) begin
             STATE_F2: state <= STATE_F3;
 
             STATE_F3: begin
+                /*
                 if (opcode == 11 || opcode == 9 && CC_N || opcode == 10 && CC_Z) begin
                     state <= STATE_E11_1;
                 end else if (opcode == 12) begin
                     state <= STATE_E12_1;
                 end else if (opcode == 13) begin
                     state <= STATE_E13_1;
+                end else if (opcode == 14) begin
+                    state <= STATE_E14_1;
+                end else if (opcode == 15) begin
+                    state <= STATE_E15_1;
                 end else if (opcode == 6) begin
                     state <= STATE_E6_1;
                 end else if (opcode == 7 || opcode == 8) begin
@@ -144,6 +176,48 @@ always @ (posedge clk) begin
                 end else begin //if ((opcode == 9 && !CC_N) || (opcode == 10 && !CC_Z)) begin
                     state <= STATE_F1;
                 end
+            */
+                case (opcode)
+                    0, 1, 2, 3: begin
+                        if (instruction == 16'b0000000000000000) begin
+                            state <= STATE_IDLE;
+                            done_flag <= 1;
+                        end else begin
+                            state <= STATE_E0_1;
+                        end
+                    end
+
+                    4: state <= STATE_E4_1;
+
+                    5: begin
+                        if (IR_Rs2 == 0) begin
+                            state <= STATE_D5A;
+                        end else begin
+                            state <= STATE_D5B;
+                        end
+                    end
+
+                    6: state <= STATE_E6_1;
+                    7, 8: state <= STATE_E7_1;
+
+                    9: begin
+                        if (CC_N) state <= STATE_E11_1;
+                        else state <= STATE_F1;
+                    end
+
+                    10: begin
+                        if (CC_Z) state <= STATE_E11_1;
+                        else state <= STATE_F1;
+                    end
+
+                    11: state <= STATE_E11_1;
+                    12: state <= STATE_E12_1;
+                    13: state <= STATE_E13_1;
+                    14: state <= STATE_E14_1;
+                    15: state <= STATE_E15_1;
+
+                    default: state <= STATE_F1;
+                endcase
             end
             
             STATE_E11_1,
@@ -186,6 +260,26 @@ always @ (posedge clk) begin
             STATE_E4_1,
             STATE_D5A,
             STATE_D5B: state <= STATE_E0_3;
+
+            STATE_E14_1: begin
+                state <= STATE_E14OR15_WAIT;
+                rx <= 1;
+            end 
+            STATE_E15_1: state <= STATE_E15_2;
+            STATE_E14_3: state <= STATE_F1;
+            STATE_E15_2: begin 
+                state <= STATE_E14OR15_WAIT;
+                rx <= 0;
+            end
+            STATE_E14OR15_WAIT: begin
+                if (uart_done) begin
+                    if (rx) begin
+                        state <= STATE_E14_3;
+                    end else begin
+                        state <= STATE_F1;
+                    end
+                end
+            end
             
             // Go to initial fetch if in unknown state
             default: state <= STATE_IDLE;
@@ -212,13 +306,17 @@ assign GPR_select_Rd_2 = (state == STATE_E12_2 || state == STATE_E13_1 || state 
 assign GPR_select_Rs1 = (state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
 assign GPR_select_Rs2 = (state == STATE_E0_1);
 assign IR_in = (state == STATE_F2);
-assign MAR_in = (state == STATE_F1 || state == STATE_E7_1);
-assign MDR_in = (state == STATE_E8_2);
-assign MDR_out = (state == STATE_F2 || state == STATE_E7_2);
+assign IR_out = (state == STATE_E14_1 || state == STATE_E15_1);
+assign MAR_in = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_E14_1 || state == STATE_E15_1);
+assign MDR_in = (state == STATE_E8_2 || state == STATE_E14_3);
+assign MDR_out = (state == STATE_F2 || state == STATE_E7_2 || state == STATE_E15_2);
 // PSW_in is an unused control signal!
 // PSW_out is an unused control signal!
-assign RAM_enable_read = (state == STATE_F1 || state == STATE_E7_1);
-assign RAM_enable_write = (state == STATE_E8_2);
+assign uart_in_and_send = state == STATE_E15_2;
+assign uart_out = state == STATE_E14_3;
+assign uart_receive = state == STATE_E14_1;
+assign RAM_enable_read = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_E15_1);
+assign RAM_enable_write = (state == STATE_E8_2 || state == STATE_E14_3);
 assign Y_in = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_E0_1 || state == STATE_D5A || state == STATE_D5B);
 assign Y_out = (state == STATE_E12_2 || state == STATE_E6_1);
 assign Y_offset_in = (state == STATE_F2);
