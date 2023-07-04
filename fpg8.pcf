@@ -17,5 +17,9 @@ set_io bottom_left 88
 set_io bottom 90
 set_io bottom_right 91
 
-# PMOD I/O
+# Button from PMOD I/O
 set_io  -pullup yes button 78
+
+# UART serial comm lines
+set_io rx 9
+set_io tx 8

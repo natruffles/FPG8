@@ -1,7 +1,7 @@
 module IR (
     input clk, // data read/written on positive clock edges
     input reset, // reset all registers to a certain value
-    input [15:0] DATA,  // in and out from bus line
+    inout [15:0] DATA,  // in and out from bus line
     output [15:0] REG_OUT_IR,  // for debugging
     output [3:0] opcode_out,
     output [2:0] rd_out_1,
@@ -10,7 +10,8 @@ module IR (
     output [1:0] shift,
     output [2:0] rs_1,
     output [2:0] rs_2,
-    input IR_in // allows data input into register
+    input IR_in,
+    input IR_out
 );
 
 // instantiation template 
@@ -27,18 +28,8 @@ IR IR_inst0 (
     .shift(),
     .rs_1(),
     .rs_2(),
-    .IR_in()
-);
-*/
-
-/*
-register IR_reg (
-    .clk(clk),
-    .reset(reset),
-    .DATA(DATA),
-    .REG_OUT(REG_OUT_IR),  
-    .latch(IR_in), 
-    .enable(1'b0)  
+    .IR_in(),
+    .IR_out()
 );
 */
 
@@ -55,8 +46,9 @@ always @(posedge clk) begin
     end
 end
 
+// if enable, r is driven to data port, else no connection (high impedance)
+assign DATA = (IR_out) ? r : 16'bZZZZZZZZZZZZZZZZ;
 assign REG_OUT_IR = r;
-
 
 assign opcode_out = REG_OUT_IR[15:12];
 assign S = REG_OUT_IR[11];
@@ -65,6 +57,5 @@ assign rd_out_1 = REG_OUT_IR[8:6];
 assign rs_1 = REG_OUT_IR[5:3];
 assign rs_2 = REG_OUT_IR[2:0];
 assign rd_out_2 = REG_OUT_IR[11:9];
-
 
 endmodule

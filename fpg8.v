@@ -1,7 +1,8 @@
 module fpg8 (
     output [4:0] led, 
     output top_left, top, top_right, middle, bottom_left, bottom, bottom_right,
-    input button, clk
+    input button, clk,
+    input rx, output tx
 );
 
 // physical buttons
@@ -49,11 +50,16 @@ wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
 wire IR_in;
+wire IR_out;
 wire MAR_in;
 wire MDR_in;
 wire MDR_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
+wire uart_done;
+wire uart_in_and_send;
+wire uart_out;
+wire uart_receive;
 wire Y_in;
 wire Y_out;
 wire Y_offset_in;
@@ -67,16 +73,21 @@ control_unit control_unit_inst0 (
     .reset(reset),
     .PSW_bits(PSW_reg_out),
     .instruction(IR_reg_out),
+    .uart_done(uart_done),
     .ALU_control(ALU_control),
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
     .GPR_select(GPR_select),
     .IR_in(IR_in),
+    .IR_out(IR_out),
     .MAR_in(MAR_in),
     .MDR_in(MDR_in),
     .MDR_out(MDR_out),
     .RAM_enable_read(RAM_enable_read),
     .RAM_enable_write(RAM_enable_write),
+    .uart_in_and_send(uart_in_and_send),
+    .uart_out(uart_out),
+    .uart_receive(uart_receive),
     .Y_in(Y_in),
     .Y_out(Y_out),
     .Y_offset_in(Y_offset_in),
@@ -131,7 +142,8 @@ IR IR_inst0 (
     .shift(shift),
     .rs_1(rs_1),
     .rs_2(rs_2),
-    .IR_in(IR_in)
+    .IR_in(IR_in),
+    .IR_out(IR_out)
 );
 
 // memory address register
@@ -181,7 +193,7 @@ PSW PSW_inst0 (
 // 4096 possible addresses, each address holds a 16-bit word
 // 12-bit address, 16-bit data, can read or write but not both
 ram #(   
-    .INIT_FILE("print_digits.txt")
+    .INIT_FILE("ram_init.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
@@ -198,6 +210,20 @@ shifter shifter_inst0 (
     .Y_shift_left(Y_shift_left),
     .Y_shift_right(Y_shift_right),
     .shift_amount(shift)
+);
+
+// uart communication module, contains register that can either 
+// send (tx) or receive (rx), not both at the same time
+uart uart_inst0 (
+    .clk(clk),
+	.reset(reset),
+    .uart_in_and_send(uart_in_and_send),
+	.uart_out(uart_out),
+    .uart_receive(uart_receive),
+    .rx(rx),
+    .tx(tx),
+    .uart_done(uart_done),
+    .DATA(w_bus)
 );
 
 // input register for ALU (other input is bus)
@@ -222,12 +248,15 @@ Z Z_inst0 (
     .Z_out(Z_out)
 );
 
-// handles generating a clock pulse every time button is pressed
+assign one_shot_clock = clk; // use this OR clock divider, not both
+// clock divider
+/*
 clock_pulser clock_pulser_inst0 (
     .clk(clk),
     .reset(reset),
     .clock_divided(one_shot_clock)
 );
+*/
 
 // outputs the lowest 4-order bits of PC to LEDs on FPGA
 leds_out leds_out_inst0(
@@ -244,5 +273,6 @@ assign middle = GPR_reg_out_1[3];
 assign bottom_left = GPR_reg_out_1[2];
 assign bottom = GPR_reg_out_1[1];
 assign bottom_right = GPR_reg_out_1[0];
+
 
 endmodule
