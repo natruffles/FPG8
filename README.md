@@ -248,23 +248,25 @@ In preparation for UART communication through the FPGA's FTDI chip, I removed in
 
 |Instruction |Opcode| Description | Clock Cycles to complete |
 |-----|--------|-----------------|------|
-|RX |1110 (14)    |IO = MM[IR.Offset2] |???
-|TX  |1111 (15)  |MM[IR.Offset2] = IO |???
+|RX |1110 (14)    |MM[IR.offset_long] = IO|???
+|TX  |1111 (15)  |IO = MM[IR.offset_long] |???
 
 Conveniently, RAM addresses can be represented with 12 bits and the opcode takes up 4 bits, so if the contents of the IR are outputted to the bus and inputted to the MAR, the correct RAM address can be read (opcode bits are ignored bc RAM is only a 12-bit address).
 
 Control signals for RX instruction:
-1. UART_receive, IR_out, MAR_in
+1. UART_receive, IR_offset_out, MAR_in
 2. Nothing (wait until control_complete signal pulsed high from UART module)
 3. UART_out, MDR_in, RAM_enable_write
 
 Control signals for TX instruction:
-1. IR_out, MAR_in, RAM_enable_read
+1. IR_offset_out, MAR_in, RAM_enable_read
 2. MDR_out, UART_in, UART_send  <-- combine the last two control signals
 3. Nothing (wait until control_complete signal pulsed high from UART module)
 
 The following code can be executed in a Python terminal on the computer to establish communication with processor that has either the uart_send or uart_recieve program loaded on it:
 ```python
+import serial
+
 # serial port is COM5 on my laptop, set baud rate to 115200
 ser = serial.Serial('COM5', 115200)
 
@@ -275,3 +277,14 @@ ser.write(b"\xFF\xFF")
 ser.read(2)
 ```
 
+## Update 7/13/2023
+I have decided to modify how my CPU treats BR, BRN, and BRZ instructions to use immediate addressing rather than PC-relative addressing. Much like how rx and tx are structured, the first 4 bits of the instruction will be the opcode, while the last 12 bits of the instruction will be the offset_long field which can be used to directly address any of the 4096 addresses in memory.
+
+Old instruction: (If ...) PC = PC + offset
+New instruction: (If ...) PC = offset_long
+
+Old control signals:
+1. Z_out, GPR_select_PC, GPR_in
+
+New control signals:
+2. IR_offset_out, GPR_select_PC, GPR_in

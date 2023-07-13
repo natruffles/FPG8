@@ -11,7 +11,7 @@ module IR (
     output [2:0] rs_1,
     output [2:0] rs_2,
     input IR_in,
-    input IR_out
+    input IR_offset_out
 );
 
 // instantiation template 
@@ -29,7 +29,7 @@ IR IR_inst0 (
     .rs_1(),
     .rs_2(),
     .IR_in(),
-    .IR_out()
+    .IR_offset_out()
 );
 */
 
@@ -47,7 +47,7 @@ always @(posedge clk) begin
 end
 
 // if enable, r is driven to data port, else no connection (high impedance)
-assign DATA = (IR_out) ? r : 16'bZZZZZZZZZZZZZZZZ;
+assign DATA = (IR_offset_out) ? {4'b0, r[11:0]} : 16'bZZZZZZZZZZZZZZZZ;
 assign REG_OUT_IR = r;
 
 assign opcode_out = REG_OUT_IR[15:12];

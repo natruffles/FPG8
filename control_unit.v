@@ -9,7 +9,7 @@ module control_unit (
     output GPR_out,
     output [2:0] GPR_select,
     output IR_in,
-    output IR_out,
+    output IR_offset_out,
     output MAR_in,
     output MDR_in,
     output MDR_out,
@@ -40,7 +40,7 @@ control_unit control_unit_inst0 (
     .GPR_out(),
     .GPR_select(),
     .IR_in(),
-    .IR_out(),
+    .IR_offset_out(),
     .MAR_in(),
     .MDR_in(),
     .MDR_out(),
@@ -67,7 +67,7 @@ assign IR_Rs2 = instruction[2:0];
 localparam STATE_F1     = 5'h1F;
 localparam STATE_F2     = 5'h1;
 localparam STATE_F3     = 5'h2;
-localparam STATE_E11_1       = 5'h3;
+localparam STATE_E12_3       = 5'h3;
 localparam STATE_E12_1       = 5'h4;
 localparam STATE_E12_2       = 5'h5;
 localparam STATE_E13_1       = 5'h6;
@@ -90,9 +90,9 @@ localparam STATE_E15_1 = 5'hC;
 localparam STATE_E14_3 = 5'h16;
 localparam STATE_E15_2 = 5'h17;
 localparam STATE_E14OR15_WAIT = 5'h18;
+localparam STATE_E9_1 = 5'h19;
 
 // remaining possible states
-//localparam  = 5'h19;
 //localparam  = 5'h1A;
 //localparam  = 5'h1B;
 //localparam  = 5'h1C;
@@ -147,7 +147,7 @@ always @ (posedge clk) begin
             STATE_F3: begin
                 /*
                 if (opcode == 11 || opcode == 9 && CC_N || opcode == 10 && CC_Z) begin
-                    state <= STATE_E11_1;
+                    state <= STATE_E12_3;
                 end else if (opcode == 12) begin
                     state <= STATE_E12_1;
                 end else if (opcode == 13) begin
@@ -201,16 +201,16 @@ always @ (posedge clk) begin
                     7, 8: state <= STATE_E7_1;
 
                     9: begin
-                        if (CC_N) state <= STATE_E11_1;
+                        if (CC_N) state <= STATE_E9_1;
                         else state <= STATE_F1;
                     end
 
                     10: begin
-                        if (CC_Z) state <= STATE_E11_1;
+                        if (CC_Z) state <= STATE_E9_1;
                         else state <= STATE_F1;
                     end
 
-                    11: state <= STATE_E11_1;
+                    11: state <= STATE_E9_1;
                     12: state <= STATE_E12_1;
                     13: state <= STATE_E13_1;
                     14: state <= STATE_E14_1;
@@ -220,18 +220,19 @@ always @ (posedge clk) begin
                 endcase
             end
             
-            STATE_E11_1,
+            STATE_E12_3,
             STATE_E6_1,
             STATE_E7_2,
             STATE_E8_2,
-            STATE_E0_3: begin
+            STATE_E0_3,
+            STATE_E9_1: begin
                 state <= STATE_F1;
             end
 
             STATE_E12_1: state <= STATE_E12_2;
 
             STATE_E12_2,
-            STATE_E13_1: state <= STATE_E11_1;
+            STATE_E13_1: state <= STATE_E12_3;
 
             STATE_E7_1: begin
                 if (opcode == 7) begin
@@ -297,16 +298,16 @@ assign ALU_pass_Y = (state == STATE_D5A || state == STATE_D5B);
 assign ALU_subtract = (state == STATE_E1_2);
 assign ALU_add_decrement = (state == STATE_F3);
 // con_ROM_out is an unused control signal!
-assign GPR_in = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_2 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_E0_3);
+assign GPR_in = (state == STATE_F3 || state == STATE_E12_3 || state == STATE_E12_2 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_E0_3 || state == STATE_E9_1);
 assign GPR_out = (state == STATE_F1 || state == STATE_E12_1 || state == STATE_E13_1 || state == STATE_E8_2 || state == STATE_E0_1 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
 // GPR_select_0 is an unused control signal!
-assign GPR_select_PC = (state == STATE_F1 || state == STATE_F3 || state == STATE_E11_1 || state == STATE_E12_1);
+assign GPR_select_PC = (state == STATE_F1 || state == STATE_F3 || state == STATE_E12_3 || state == STATE_E12_1 || state == STATE_E9_1);
 assign GPR_select_Rd_1 = (state == STATE_E0_3);
 assign GPR_select_Rd_2 = (state == STATE_E12_2 || state == STATE_E13_1 || state == STATE_E6_1 || state == STATE_E7_2 || state == STATE_E8_2);
 assign GPR_select_Rs1 = (state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
 assign GPR_select_Rs2 = (state == STATE_E0_1);
 assign IR_in = (state == STATE_F2);
-assign IR_out = (state == STATE_E14_1 || state == STATE_E15_1);
+assign IR_offset_out = (state == STATE_E14_1 || state == STATE_E15_1 || state == STATE_E9_1);
 assign MAR_in = (state == STATE_F1 || state == STATE_E7_1 || state == STATE_E14_1 || state == STATE_E15_1);
 assign MDR_in = (state == STATE_E8_2 || state == STATE_E14_3);
 assign MDR_out = (state == STATE_F2 || state == STATE_E7_2 || state == STATE_E15_2);
@@ -323,7 +324,7 @@ assign Y_offset_in = (state == STATE_F2);
 assign Y_shift_left = (state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_D5A);
 assign Y_shift_right = (state == STATE_D5B);
 assign Z_in = (state == STATE_F1 || state == STATE_F3 || state == STATE_E13_1 || state == STATE_E0_2 || state == STATE_E1_2 || state == STATE_E2_2 || state == STATE_E3_2 || state == STATE_E4_1 || state == STATE_D5A || state == STATE_D5B);
-assign Z_out = (state == STATE_F3 || state == STATE_E11_1 || state == STATE_E0_3 || state == STATE_E7_1);
+assign Z_out = (state == STATE_F3 || state == STATE_E12_3 || state == STATE_E0_3 || state == STATE_E7_1);
 
 // combine ALU and GPR assignments, priority encode them
 assign ALU_control[2] = (ALU_or | ALU_pass_Y | ALU_subtract | ALU_add_decrement);

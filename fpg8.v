@@ -50,7 +50,7 @@ wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
 wire IR_in;
-wire IR_out;
+wire IR_offset_out;
 wire MAR_in;
 wire MDR_in;
 wire MDR_out;
@@ -79,7 +79,7 @@ control_unit control_unit_inst0 (
     .GPR_out(GPR_out),
     .GPR_select(GPR_select),
     .IR_in(IR_in),
-    .IR_out(IR_out),
+    .IR_offset_out(IR_offset_out),
     .MAR_in(MAR_in),
     .MDR_in(MDR_in),
     .MDR_out(MDR_out),
@@ -143,7 +143,7 @@ IR IR_inst0 (
     .rs_1(rs_1),
     .rs_2(rs_2),
     .IR_in(IR_in),
-    .IR_out(IR_out)
+    .IR_offset_out(IR_offset_out)
 );
 
 // memory address register
