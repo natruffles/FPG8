@@ -292,3 +292,91 @@ New control signals:
 These modifications may cause some of the programs I wrote in the past to not work, but it makes it much easier to program these branch instructions in assembly.
 
 I also have decided to remove the sign extension feature from IR.Offset. This will prevent any PC+offset based address modes from going backwards, but that is now handled by my offset_long branch instructions. It will make it much less of a headache to program in assembly as I can have the instructions that access the data be located directly before the data. To implement this, I must remove the sign extension feature of Y_offset_in, and instead append 0s to the missing addresses.
+
+## Update 7/15/2023
+
+Now that my processor is mostly complete and can communicate with a terminal on my laptop, let's write a small assembler so I don't have to handwrite binary. This will define my assembly instructions and also easier ways to declare data in RAM.
+
+Note that anytime a dollar sign is included, it represents a register. You can the register’s number (that is, from \$0 to \$7), or the register’s name (for example, \$t1).
+
+Let's create my assembly instructions (I will be trying to follow MIPS assembly syntax somewhat). Some instructions will directly represent my instruction set, while others will handle things like declaring data.:
+
+0. ```add(s) $Rd, $Rs1, $Rs2(, opt)```   This instruction adds together the values stored in register addresses Rs1 and Rs2 (optional argument for shifting the data stored in Rs2 to the left anywhere from 0-3 bits) and stores the result in register address Rd. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+1. ```sub(s) $Rd, $Rs1, $Rs2(, opt)```   This instruction calculates the difference of the values stored in register addresses Rs1 and Rs2 (optional argument for shifting the data stored in Rs2 to the left anywhere from 0-3 bits) and stores the result in register address Rd. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+2. ```and(s) $Rd, $Rs1, $Rs2(, opt)```   This instruction ANDs together the values stored in register addresses Rs1 and Rs2 (optional argument for shifting the data stored in Rs2 to the left anywhere from 0-3 bits) and stores the result in register address Rd. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+3. ```or(s) $Rd, $Rs1, $Rs2(, opt)```   This instruction ORs together the values stored in register addresses Rs1 and Rs2 (optional argument for shifting the data stored in Rs2 to the left anywhere from 0-3 bits) and stores the result in register address Rd. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+4. ```not(s) $Rd, $Rs1```  This instruction NOTs the values stored in register addresses Rs1 and stores the result in register address Rd. Note that there is no optional argument to shift the bits, as that functionality is not included. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+5. ```shft(s) $Rd, $Rs1, $Rs2, shft```    This instruction shifts the value stored in register address Rs1 by a magnitude of 0-3 and stores the result in register address Rd. If the value stored in register address Rs2 is equivalent to 0, the bits will logically shift left, otherwise, the bits will arithmetically shift right. Optionally, adding an "s" to the end of the opcode identifier will tell the processor to set the condition codes as a result of the operation.
+
+For the following instructions, "offset" can be represented in many ways:
+- A decimal number ranging from 0 to 511 (the offset field is 9 bits)
+- A negative decimal number ranging from -256 to -1 (will be represented with 2's complement)
+- A hexadecimal number ranging from 0x0 to 0x1FF
+
+6. ```ldi $Rd, offset```   This instruction stores the value in offset (sign extended to 16 bits) in the register address Rd. 
+
+7. ```ld $Rd, offset```    This instruction stores the value in RAM at the address of (PC + offset) in the register address Rd. 
+
+8. ```st $Rd, offset```    This instruction stores the value in the register address Rd in RAM at the address of (PC + offset).
+
+12. ```jsr $Rd, offset```     This instruction will store the value in the program counter (PC) in the register address Rd, then will set the value of the program counter (PC) to (PC + offset) unconditionally.
+
+13. ```rts $Rd, offset```     This instruction will set the value of the program counter equal to the value stored in the register address Rd plus the value in the offset field.
+
+For the following instructions, "offset_long" can be represented in many ways:
+- A decimal number ranging from 0 to 4095 (the offset_long field is 12 bits)
+- A hexadecimal number ranging from 0x0 to 0x1000
+- Note that there is no negative number support because this offset field will always be accessing a RAM address which would be misleading if it were to be represented as a negative number.
+
+9. ```brn offset_long```     This instruction will set the value of the program counter (PC) to RAM address offset_long if the CC.N condition code is high.
+
+10. ```brz offset_long```     This instruction will set the value of the program counter (PC) to RAM address offset_long if the CC.Z condition code is high.
+
+11. ```br offset_long```     This instruction will set the value of the program counter (PC) to RAM address offset_long unconditionally.
+
+14. ```rx offset_long```    Waits to receive a value over the UART rx channel, and stores this value in RAM at address offset_long.
+
+15. ```tx offset_long```    Sends the value stored in RAM at address offset_long over the UART tx channel.
+
+All of the below assembly instructions are not directly reflected as a binary instruction, but are treated as macros that are decomposed into binary instruction/s or no instructions at all.
+
+16. ```cmp $Rd```    Will compare the value stored in Rd to see if it is is equal to zero (CC.Z) or a negative value (CC.N) or neither. Can be decomposed into the assembly instruction ```subs $0, $Rd, $0``` which subtracts the value stored in \$Rd by 0 and stores it in the garbage disposal register and sets condition codes.
+
+17. ```disp val```   Displays the val on the built-in 7 segment display. Note that this will write a garbage value to GPR[1], so I would only use this instruction for debugging. "val" can be represented in many ways:
+- A decimal number ranging from 0 to 9
+- a character ranging from 'a' to 'j' (uppercase or lowercase makes no difference)
+
+18. ```# anything``` Line comments in assembly code are preceded by one pound sign.
+
+19. ```nop``` A no-operation that takes 6 clock cycles. Can be decomposed into the assembly instruction ```sub $0, $Rd, $0``` which subtracts the value stored in \$Rd by 0 and stores it in the garbage disposal register without setting condition codes.
+
+20. ```end``` Represents the end of a program, will cause the processor to enter an infinite loop of doing nothing. Pressing the reset button after this stage (or anywhere) will reset all registers (but not the RAM) and send the program counter back to 0. Can be decomposed into the assembly instruction ```add $0, $0, $0``` or ```0000000000000000``` in binary.
+
+Assembly programs will be split into a ".text" section which contains all of the program instructions, and a ".data" section which contains all of the program data. In the text section, the start of the main function will be the first line in RAM (PC = 0).
+
+Shown below are examples of how to declare variables in the ".data" section. A ```word``` datatype is 2 bytes, an ```offset``` datatype is 9 bits, and an ```offset_long``` datatype is 12 bits.
+
+Example ```word``` data declarations:
+- ```number1: .word (opt)``` This sets a word equal to the value 565. Decimal values can range from 0 to 65535 if unsigned.
+- ```number2: .word -32768 (opt)``` This sets a word equal to the value -32768. Decimal values can range from -32768 to -1 if written as negative.
+- ```hexnumber1: .word 0xFA95 (opt)``` This sets a word equal to the value 0xFA95. Hexadecimal values can range from 0x0 to 0xFFFF.
+- ```letters1: .word "Bc" (opt)``` This sets a word equal to the characters B and c.
+- ```binary1: .word b1010101010101010 (opt)``` This sets a word equal to the binary number 1010101010101010. Binary values can range from b0000000000000000 to b1111111111111111.
+
+Example ```offset``` data declarations:
+- ```number3: .offset 511``` Decimal values can range from 0 to 511 if unsigned.
+- ```number4: .offset -256``` Decimal values can range from -256 to -1 if written as negative.
+- ```hexnumber2: .offset 0x1FF``` Hexadecimal values can range from 0x0 to 0x1FF.
+
+Example ```offset_long``` data declarations:
+- ```number5: .offset_long 4095``` Decimal values can range from 0 to 4095 if unsigned.
+- ```hexnumber3: .offset 0x1000``` Hexadecimal values can range from 0x0 to 0x1000.
+
+Putting everything together, you can check out ```programs\test.asm``` to view a sample working assembly program.
+
+Currently, my assembler takes a .asm file and prints to the python console each instruction object, data object, and function location object to the terminal, but does not yet generate a binary file.

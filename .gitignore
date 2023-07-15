@@ -7,3 +7,4 @@
 abc.history
 *.gtkw
 show.dot
+programming/__pycache__

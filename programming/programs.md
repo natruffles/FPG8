@@ -1,3 +1,9 @@
+## Important note
+
+Within this folder, anything that is a ```.txt``` file is binary that will be used to initialize contents of RAM on the FPGA (contains both instructions and data).
+Anything that is a ```.asm``` file is assembly code that outlines programming logic and the data that the program will work on. This can be assembled into a ```.txt``` binary file by opening a python terminal in this directory and typing this command:
+```assembler.py test.asm test.txt``` where the .asm file is input and the .txt file is generated as output.
+
 ### multiply_program.txt
 Multiplies the values in memory address 0xFE (line 255) and memory address 0xFF (line 256) and stores the result in memory address 0xFD (line 254).
 Only the first 256 of the 4096 memory cells are used.
