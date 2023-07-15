@@ -31,7 +31,7 @@ always @(posedge clk) begin
         r <= DATA;
     end else if (Y_offset_in) begin
         r[8:0] <= DATA[8:0];
-        r[15:9] <= {7{DATA[8]}};
+        r[15:9] <= 0;
     end
 end
 

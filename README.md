@@ -288,3 +288,7 @@ Old control signals:
 
 New control signals:
 2. IR_offset_out, GPR_select_PC, GPR_in
+
+These modifications may cause some of the programs I wrote in the past to not work, but it makes it much easier to program these branch instructions in assembly.
+
+I also have decided to remove the sign extension feature from IR.Offset. This will prevent any PC+offset based address modes from going backwards, but that is now handled by my offset_long branch instructions. It will make it much less of a headache to program in assembly as I can have the instructions that access the data be located directly before the data. To implement this, I must remove the sign extension feature of Y_offset_in, and instead append 0s to the missing addresses.
