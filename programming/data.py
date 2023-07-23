@@ -1,6 +1,13 @@
 import sys
 import re
 
+# initalize binary list, 4096 strings of 16 zero characters in a row
+bin_list = ['0' * 16 for _ in range(4096)]
+
+# initialize list of 4096 bits to represent if binary has been "used" by data
+used_list = [0] * 4096
+
+# initialize empty list of data objects
 data_objects = []
 
 class DataVal:
@@ -18,6 +25,7 @@ class DataVal:
 
     def __str__(self):
         return f"Name: {self.var_name}, Number of bits: {self.bits}, value in decimal: {self.value}, data_address: {self.data_address}"
+
 
     def dec_parse(self, data_address):
         original_string = self.data_line
@@ -68,7 +76,7 @@ class DataVal:
             if address_string[:2] == "0x":
                 address_val = int(address_string[2:], 16)
             # binary string to integer
-            elif self.value_string[0] == 'b':
+            elif address_string[0] == 'b':
                 address_val = int(address_string[1:], 2)
             # integer string (positive or negative) to integer
             else: 
@@ -78,11 +86,10 @@ class DataVal:
 
         # parse value
         try: 
-            print("Parsing value " + self.value_string + "...")
             # hexadecimal string to integer
             if self.value_string[:2] == "0x":
                 self.value = int(self.value_string[2:], 16)
-                print(self.data_type + "Value as an integer: " + str(self.value))
+                # print(self.data_type + "Value as an integer: " + str(self.value))
             # binary string to integer
             elif self.value_string[0] == 'b':
                 self.value = int(self.value_string[1:], 2)
@@ -93,7 +100,7 @@ class DataVal:
             # integer string (positive or negative) to integer
             else: 
                 self.value = int(self.value_string)
-                print(self.data_type + " Value as an integer: " + str(self.value))
+                # print(self.data_type + " Value as an integer: " + str(self.value))
         except:
             sys.exit("Unable to parse \"" + self.data_type + "\" value into an integer value!")
 
@@ -119,3 +126,18 @@ class DataVal:
             self.data_address = address_val
         elif self.data_type == "word":
             self.data_address = data_address
+
+    
+    def convert_to_binary(self):
+        if self.data_type == "word":
+            print("Converting \"" + str(self) + "\" into binary...")
+            if used_list[self.data_address] == 0:
+                if self.value >= 0:
+                    bin_list[self.data_address] = format(self.value, '016b')
+                else:
+                    mask = (1 << 16) - 1
+                    complement = ((abs(self.value) ^ mask) + 1) & mask
+                    bin_list[self.data_address] = str(bin(complement)[2:].zfill(16))
+                used_list[self.data_address] = 1
+            else:
+                sys.exit("\"" + str(self) + "\": Two word declarations cannot have overlapping addresses!")

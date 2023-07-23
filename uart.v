@@ -34,7 +34,8 @@ assign DATA = (uart_out) ? bytes : 16'bZZZZZZZZZZZZZZZZ;
 
 reg [15:0] bytes; // Bytes to transmit/receive
 
-parameter CLOCK_DIVIDE = 26; // clock rate (12Mhz) / (baud rate (115200) * 4)
+parameter CLOCK_DIVIDE = 26;   //26; // clock rate (12Mhz) / (baud rate (115200) * 4)
+//parameter CLOCK_DIVIDE = 313;
 
 // States for the state machine.
 // These are just constants, not parameters to override.
@@ -54,7 +55,7 @@ parameter TX_DELAY_RESTART = 10;
 // is low if sending/receiving least significant byte [7:0]
 reg byte_significance;
 
-reg [4:0] clk_divider;
+reg [10:0] clk_divider;
 reg [5:0] countdown;
 reg [3:0] bits_remaining;
 reg [3:0] state;
@@ -88,8 +89,12 @@ always @(posedge clk) begin
 	case (state)
         IDLE: begin
             tx = 1;
-			uart_done = 0;
 			byte_significance = 1;
+			//clk_divider = CLOCK_DIVIDE;
+			//countdown = 0;
+			//bytes = 16'b0000000000000000;
+        	//bits_remaining = 0;
+        	//data = 8'b00000000;
             if (uart_in_and_send) begin
                 bytes = DATA;
                 state = TX_IDLE;
@@ -101,6 +106,7 @@ always @(posedge clk) begin
 		RX_IDLE: begin
 			// A low pulse on the receive line indicates the
 			// start of data.
+			uart_done = 0;
 			if (!rx) begin
 				// Wait half the period - should resume in the
 				// middle of this first pulse.
@@ -172,6 +178,7 @@ always @(posedge clk) begin
 		end
 	
 		TX_IDLE: begin
+			uart_done = 0;
             if (byte_significance) begin
                 data = bytes[15:8];
             end else begin
@@ -206,7 +213,7 @@ always @(posedge clk) begin
 			// Wait until countdown reaches the end before
 			// we send another transmission. This covers the
 			// "stop bit" delay.
-			if (byte_significance & ~countdown) uart_done = 1;
+			if (byte_significance & (countdown == 0)) uart_done = 1;
 			state = (countdown) ? TX_DELAY_RESTART : 
                     (byte_significance) ? IDLE :
                     TX_IDLE;

@@ -1,24 +1,30 @@
 `timescale 1 ns / 10 ps
 
 module fpg8_tb ();
-
 // physical buttons
 reg one_shot_clock = 0;
 reg reset = 0;
+reg rx;
+wire tx;
+wire [4:0] led;
+wire top_left; 
+wire top; 
+wire top_right;
+wire middle;
+wire bottom_left;
+wire bottom;
+wire bottom_right;
 
 // bus wire and register to drive the bus
 wire [15:0] w_bus;
 
 // output debugging registers
-wire [15:0] GPR_reg_out_0;
+wire [15:0] GPR_reg_out_1;
 wire [15:0] GPR_reg_out_7;
 wire [15:0] IR_reg_out;
 wire [15:0] Y_reg_out;
 wire [15:0] ALU_reg_out;
-wire [15:0] Z1_reg_out;
-wire [15:0] Z2_reg_out;
-wire [15:0] timer_reg_out;
-wire [2:0] PSW_reg_out;
+wire [1:0] PSW_reg_out;
 // MAR_to_RAM is debug register for MAR
 wire [15:0] MDR_reg_out;
 wire [15:0] RAM_reg_out;
@@ -46,20 +52,20 @@ wire CC_Z;
 
 // control signal index;
 wire [2:0] ALU_control;
-wire con_ROM_out;
 wire GPR_in;
 wire GPR_out;
 wire [2:0] GPR_select;
 wire IR_in;
+wire IR_offset_out;
 wire MAR_in;
 wire MDR_in;
 wire MDR_out;
-wire PSW_in;
-wire PSW_out;
 wire RAM_enable_read;
 wire RAM_enable_write;
-wire timer_in;
-wire timeout;
+wire uart_done;
+wire uart_in_and_send;
+wire uart_out;
+wire uart_receive;
 wire Y_in;
 wire Y_out;
 wire Y_offset_in;
@@ -71,25 +77,23 @@ wire Z_out;
 control_unit control_unit_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
-    .opcode(opcode),
     .PSW_bits(PSW_reg_out),
-    .IR_Rs2(rs_2),
-    .timeout(timeout),
     .instruction(IR_reg_out),
+    .uart_done(uart_done),
     .ALU_control(ALU_control),
-    .con_ROM_out(con_ROM_out),
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
     .GPR_select(GPR_select),
     .IR_in(IR_in),
+    .IR_offset_out(IR_offset_out),
     .MAR_in(MAR_in),
     .MDR_in(MDR_in),
     .MDR_out(MDR_out),
-    .PSW_in(PSW_in),
-    .PSW_out(PSW_out),
     .RAM_enable_read(RAM_enable_read),
     .RAM_enable_write(RAM_enable_write),
-    .timer_in(timer_in),
+    .uart_in_and_send(uart_in_and_send),
+    .uart_out(uart_out),
+    .uart_receive(uart_receive),
     .Y_in(Y_in),
     .Y_out(Y_out),
     .Y_offset_in(Y_offset_in),
@@ -115,19 +119,12 @@ comparator comparator_inst0 (
     .CC_N(CC_N)
 );
 
-// outputs value of "8" to the bus when enabled
-constant_ROM constant_ROM_inst0 (
-    .DATA(w_bus),
-    .reset_to_constant_val(reset),
-    .enable(con_ROM_out)
-);
-
 // Eight 16-bit general purpose registers
 GPR GPR_inst0 (
     .clk(one_shot_clock), 
     .reset(reset),
     .DATA(w_bus), 
-    .REG_OUT_0(GPR_reg_out_0),  
+    .REG_OUT_1(GPR_reg_out_1),  
     .REG_OUT_7(GPR_reg_out_7), 
     .GPR_in(GPR_in),
     .GPR_out(GPR_out),
@@ -151,7 +148,8 @@ IR IR_inst0 (
     .shift(shift),
     .rs_1(rs_1),
     .rs_2(rs_2),
-    .IR_in(IR_in)
+    .IR_in(IR_in),
+    .IR_offset_out(IR_offset_out)
 );
 
 // memory address register
@@ -184,10 +182,7 @@ MDR MDR_inst0 (
 PSW PSW_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
-    .DATA(w_bus),  
     .REG_OUT_PSW(PSW_reg_out), 
-    .latch(PSW_in), 
-    .enable(PSW_out), 
     .Z_in(Z_in),
     .IR_opcode(opcode),
     .IR_S(S),
@@ -204,7 +199,7 @@ PSW PSW_inst0 (
 // 4096 possible addresses, each address holds a 16-bit word
 // 12-bit address, 16-bit data, can read or write but not both
 ram #(   
-    .INIT_FILE("multiply_program.txt")
+    .INIT_FILE("ram_init.txt")
 ) ram_inst0 (
     .clk(one_shot_clock),
     .w_en(RAM_enable_write),
@@ -223,15 +218,18 @@ shifter shifter_inst0 (
     .shift_amount(shift)
 );
 
-// generates timeout signal when timer counts down to 0
-// timeout signal will remain high until timer value is reset, input with nonzero value
-timer timer_inst0 (
+// uart communication module, contains register that can either 
+// send (tx) or receive (rx), not both at the same time
+uart uart_inst0 (
     .clk(one_shot_clock),
-    .reset(reset), 
-    .DATA(w_bus), 
-    .REG_OUT_TIMER(timer_reg_out), 
-    .timer_in(timer_in),
-    .timeout(timeout)
+	.reset(reset),
+    .uart_in_and_send(uart_in_and_send),
+	.uart_out(uart_out),
+    .uart_receive(uart_receive),
+    .rx(rx),
+    .tx(tx),
+    .uart_done(uart_done),
+    .DATA(w_bus)
 );
 
 // input register for ALU (other input is bus)
@@ -251,16 +249,40 @@ Z Z_inst0 (
     .clk(one_shot_clock),
     .reset(reset),
     .from_ALU(ALU_reg_out),
-    .REG_OUT_Z1(Z1_reg_out), 
-    .REG_OUT_Z2(Z2_reg_out),
     .out_to_bus(w_bus),
     .Z_in(Z_in),
     .Z_out(Z_out)
 );
 
+// assign one_shot_clock = clk; // use this OR clock divider, not both
+// clock divider
+/*
+clock_pulser clock_pulser_inst0 (
+    .clk(clk),
+    .reset(reset),
+    .clock_divided(one_shot_clock)
+);
+*/
+
+// outputs the lowest 4-order bits of PC to LEDs on FPGA
+leds_out leds_out_inst0(
+    .in(GPR_reg_out_7),
+    .clock_divided(one_shot_clock),
+    .leds(led)
+);
+
+// outputs the lowest 7-order bits of GPR[1] (display-out register) to 7seg display
+assign top_left = GPR_reg_out_1[6];
+assign top = GPR_reg_out_1[5];
+assign top_right = GPR_reg_out_1[4];
+assign middle = GPR_reg_out_1[3];
+assign bottom_left = GPR_reg_out_1[2];
+assign bottom = GPR_reg_out_1[1];
+assign bottom_right = GPR_reg_out_1[0];
+
 
 // Simulation time: 1000000 * 1 ns = 1 ms
-localparam DURATION = 1000000;
+localparam DURATION = 10000000;
 
 // Generate clock signal: 1 / ((2 * 41.67) * 1 ns) = 11,999,040.08 MHz
 always begin
@@ -269,10 +291,6 @@ always begin
 end
 
 initial begin
-    reset = 1;
-    #(2 * 41.67)
-    reset = 0;
-    #(200000 - 2*41.67)
     reset = 1;
     #(2 * 41.67)
     reset = 0;

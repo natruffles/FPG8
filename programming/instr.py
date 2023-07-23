@@ -1,6 +1,6 @@
 import sys
 import re
-from data import data_objects
+from data import data_objects, used_list, bin_list
 from floc import fl_objects
 
 def instr_decode(instr_string):
@@ -141,21 +141,44 @@ class AsmInstF1:
                             self.offset = data.value     # reminder that the actual address will be PC + offset
                             found_flag = 1
                         elif data.data_type == "word":
-                            self.offset = data.data_address - self.pc  # such that PC + offset will reach the data address
+                            if self.opcode != 6:
+                                self.offset = data.data_address - self.pc  # such that PC + offset will reach the data address
+                            else: # if ldi instruction, just load the data address into offset field
+                                print("WARNING: Loading word into offset field, make sure value is within bounds to prevent overflow!")
+                                self.offset = data.data_address
                             found_flag = 1
                         else:
                             sys.exit("\"" + original_instr + "\": Cannot reference an offset long datatype!")
                         break
                 if found_flag == 0:
+                    for fl in fl_objects:
+                        if instr_string == fl.name:
+                            print("WARNING: Loading offset_long into offset field, make sure value is within bounds to prevent overflow!")
+                            self.offset = fl.pc - self.pc  # such that PC + offset will reach the function location address
+                            found_flag = 1
+                            break
+                if found_flag == 0:
                     sys.exit("\"" + original_instr + "\": Unable to parse final offset argument!")
 
             if self.offset < -256 or self.offset > 511:
                 sys.exit("\"" + original_instr + "\": Offset argument overflow! Must be -256 <= x <= 511!")
-            
-            print(self)
+
 
     def __str__(self):
         return f"Opcode: {self.opcode}, Rd: {self.rd}, Offset: {self.offset}, pc: {self.pc}"
+    
+
+    def convert_to_binary(self):
+        print("Converting \"" + str(self) + "\" into binary...")
+        if used_list[self.pc] == 0:
+            char_list = list(bin_list[self.pc])
+            char_list[:4] = list(format(self.opcode, '04b'))
+            char_list[4:7] = list(format(self.rd, '03b'))
+            char_list[7:] = list(format(self.offset, '09b'))
+            bin_list[self.pc] = ''.join(char_list)
+            used_list[self.pc] = 1
+        else:
+            sys.exit("\"" + self + "\": Address already in use by this data/instruction: " + bin_list[self.pc])
     
 
 # assembly instruction format 2 (opcode, s, shift, rd, rs1, rs2)
@@ -226,12 +249,26 @@ class AsmInstF2:
             self.shift = 0
         else:
             sys.exit("Unable to parse shift syntax of \"" + original_instr + "\"!")
-        
-        print(self)
 
     
     def __str__(self):
         return f"Opcode: {self.opcode}, S: {self.s}, Shift: {self.shift}, Rd: {self.rd}, Rs1: {self.rs1}, Rs2: {self.rs2}, pc: {self.pc}"
+
+
+    def convert_to_binary(self):
+        print("Converting \"" + str(self) + "\" into binary...")
+        if used_list[self.pc] == 0:
+            char_list = list(bin_list[self.pc])
+            char_list[:4] = list(format(self.opcode, '04b'))
+            char_list[4] = format(self.s, '01b')
+            char_list[5:7] = list(format(self.shift, '02b'))
+            char_list[7:10] = list(format(self.rd, '03b'))
+            char_list[10:13] = list(format(self.rs1, '03b'))
+            char_list[13:] = list(format(self.rs2, '03b'))
+            bin_list[self.pc] = ''.join(char_list)
+            used_list[self.pc] = 1
+        else:
+            sys.exit("\"" + self + "\": Address already in use by this data/instruction: " + bin_list[self.pc])
 
 
 # assembly instruction format 3 (opcode, offset_long)
@@ -267,8 +304,12 @@ class AsmInstF3:
             found_flag = 0
             for data in data_objects:
                 if instr_string == data.var_name:
-                    if data.data_type == "offset_long":
-                        self.offset_long = data.value     # reminder that the actual address will be PC + offset
+                    if data.data_type == "offset_long" or data.data_type == "offset":
+                        self.offset_long = data.value  # can store offset datatype in an offset long easily
+                        found_flag = 1
+                    elif data.data_type == "word":
+                        print("WARNING: assigning a word datatype to what should be an offset_long field. Note that the address of the word is what will be used in instruction.")
+                        self.offset_long = data.data_address
                         found_flag = 1
                     else:
                         sys.exit("\"" + original_instr + "\": Cannot reference an offset or word datatype!")
@@ -285,7 +326,18 @@ class AsmInstF3:
         if self.offset_long < 0 or self.offset_long > 4095:
             sys.exit("\"" + original_instr + "\": Offset_long argument overflow! Must be 0 <= x <= 4095!")
 
-        print(self)
 
     def __str__(self):
         return f"Opcode: {self.opcode}, Offset_long: {self.offset_long}, pc: {self.pc}"
+    
+
+    def convert_to_binary(self):
+        print("Converting \"" + str(self) + "\" into binary...")
+        if used_list[self.pc] == 0:
+            char_list = list(bin_list[self.pc])
+            char_list[:4] = list(format(self.opcode, '04b'))
+            char_list[4:] = list(format(self.offset_long, '012b'))
+            bin_list[self.pc] = ''.join(char_list)
+            used_list[self.pc] = 1
+        else:
+            sys.exit("\"" + self + "\": Address already in use by this data/instruction: " + bin_list[self.pc])

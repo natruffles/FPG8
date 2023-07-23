@@ -17,3 +17,9 @@ Receives 2 bytes from serial UART connection rx line to RAM, then loads those 2 
 
 ### uart_send.txt
 Sends 2 bytes from RAM[3] to the serial UART connection tx line. Can be repeated with reset button.
+
+### uart_send_multiple.txt
+Sends 64 bytes total (32 addresses) to the serial UART connection tx line. Can be repeated with reset button.
+
+### send_receive_test.txt
+While the letter "A" is displayed on 7-segment display, is waiting to receive the characters "ab" over UART. Once this occurs, it will send the alphabet over UART, then go back to the start (waiting to receive "ab" over UART while displaying "A").

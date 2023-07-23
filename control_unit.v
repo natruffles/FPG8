@@ -106,7 +106,8 @@ reg [4:0] state;
 reg done_flag;
 
 // used to differentiate if sending or receiving with uart, is high if receiving
-reg rx;
+wire r_x;
+assign r_x = ~opcode[0];  // is high when opcode matches rx instruction (1110), low when tx instruction (1111)
 
 // inbetween wires that will be combined into GPR_select and ALU_select
 wire GPR_select_0; wire GPR_select_PC;
@@ -127,11 +128,18 @@ always @ (posedge clk) begin
     if (reset == 1'b1) begin
         state <= STATE_IDLE;
         done_flag <= 0;
-        rx <= 0;
         
     // Define the state transitions
     end else begin
         case (state)
+            STATE_E14OR15_WAIT: begin
+                if (uart_done & ~r_x) begin
+                    state <= STATE_F1;
+                end else if (uart_done & r_x) begin
+                    state <= STATE_E14_3;
+                end
+            end
+
             STATE_IDLE: begin
                 if (done_flag) begin
                     state <= STATE_IDLE;
@@ -145,38 +153,6 @@ always @ (posedge clk) begin
             STATE_F2: state <= STATE_F3;
 
             STATE_F3: begin
-                /*
-                if (opcode == 11 || opcode == 9 && CC_N || opcode == 10 && CC_Z) begin
-                    state <= STATE_E12_3;
-                end else if (opcode == 12) begin
-                    state <= STATE_E12_1;
-                end else if (opcode == 13) begin
-                    state <= STATE_E13_1;
-                end else if (opcode == 14) begin
-                    state <= STATE_E14_1;
-                end else if (opcode == 15) begin
-                    state <= STATE_E15_1;
-                end else if (opcode == 6) begin
-                    state <= STATE_E6_1;
-                end else if (opcode == 7 || opcode == 8) begin
-                    state <= STATE_E7_1;
-                end else if (opcode >= 0 && opcode <= 3) begin
-                    if (instruction == 16'b0000000000000000) begin
-                        state <= STATE_IDLE;
-                        done_flag <= 1;
-                    end else begin
-                        state <= STATE_E0_1;
-                    end
-                end else if (opcode == 4) begin
-                    state <= STATE_E4_1;
-                end else if (opcode == 5 && IR_Rs2 == 0) begin
-                    state <= STATE_D5A;
-                end else if (opcode == 5 && IR_Rs2 != 0) begin
-                    state <= STATE_D5B;
-                end else begin //if ((opcode == 9 && !CC_N) || (opcode == 10 && !CC_Z)) begin
-                    state <= STATE_F1;
-                end
-            */
                 case (opcode)
                     0, 1, 2, 3: begin
                         if (instruction == 16'b0000000000000000) begin
@@ -264,22 +240,11 @@ always @ (posedge clk) begin
 
             STATE_E14_1: begin
                 state <= STATE_E14OR15_WAIT;
-                rx <= 1;
             end 
             STATE_E15_1: state <= STATE_E15_2;
             STATE_E14_3: state <= STATE_F1;
             STATE_E15_2: begin 
                 state <= STATE_E14OR15_WAIT;
-                rx <= 0;
-            end
-            STATE_E14OR15_WAIT: begin
-                if (uart_done) begin
-                    if (rx) begin
-                        state <= STATE_E14_3;
-                    end else begin
-                        state <= STATE_F1;
-                    end
-                end
             end
             
             // Go to initial fetch if in unknown state

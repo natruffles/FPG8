@@ -1,6 +1,6 @@
 # This program will take in an assembly (.asm) file and output a binary executable (.txt)
 
-import sys  # used to pass in arguments from command line
+import sys  # to pass in arguments from command line
 import re  # used for string parsing
 import instr
 import data
@@ -57,13 +57,16 @@ except:
              file contains \".data\" line before data declarations at the end of file!")
 
 # parse all of the data entries into a list of objects
+num_words = 0
 word_data_address = 4000  # default start address for data if not specified for first word data declaration
 for i in range(len(data_lines)):
     data.data_objects.append(None)
     data.data_objects[i] = data.DataVal(data_lines[i], word_data_address)
     if data.data_objects[i].data_type == "word" and data.data_objects[i].data_address != 0:
+        num_words = num_words + 1
         word_data_address = data.data_objects[i].data_address + 1
     elif data.data_objects[i].data_type == "word":
+        num_words = num_words + 1
         word_data_address = word_data_address + 1
 
 # parse all function locations into a list of objects
@@ -108,13 +111,54 @@ for i in range(len(instr_lines)):
         instr_counter = instr_counter + 1
         line_number = line_number + 1
 
-print()
+print("\nData objects overview:")
 for string in data.data_objects:
     print(string)
-print()
+print("\nFunction locations overview:")
 for string in floc.fl_objects:
     print(string)
-print()
+print("\nInstruction objects overview:")
 for string in instr_objects:
     print(string)
-        
+
+print("\nConverting word declarations to binary...")
+for dataVal in data.data_objects:
+    dataVal.convert_to_binary()
+
+print("\nConverting instructions to binary...")
+for instruct in instr_objects:
+    instruct.convert_to_binary()
+
+# calculate diagnostic data
+used_addresses = sum(1 for num in data.used_list if num != 0)
+used_percent = percentage = round(used_addresses / 4096.0 * 100.0)
+used_ram = used_addresses * 2 / 1024 # in kilobytes
+
+print("\nDiagnostics:")
+diagnostic_data = [
+    ["Addresses:", str(used_addresses) + " / 4096", str(used_percent) + "%"],
+    ["RAM:", str(used_ram) + " kB / 8 kB", str(used_percent) + "%"],
+    ["# Instructions:", len(instr_objects), ""],
+    ["# Data Addresses:", num_words, ""]
+]
+
+# Determine the width of each column
+column_widths = [max(len(str(item)) for item in column) for column in zip(*diagnostic_data)]
+
+# Print the table headers
+header_row = "   ".join(header.rjust(width) for header, width in zip(diagnostic_data[0], column_widths))
+print(header_row)
+
+# Print the table rows
+for row in diagnostic_data[1:]:
+    row_str = "   ".join(str(item).rjust(width) for item, width in zip(row, column_widths))
+    print(row_str)
+
+
+# write elements of binary list to a txt file
+try:
+    with open(binary_file, "w") as file:
+        for string in data.bin_list:
+            file.write(string + "\n")
+except:
+    sys.exit("Generated binary, but unable to write to file specified!")

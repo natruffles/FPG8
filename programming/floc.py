@@ -17,7 +17,7 @@ class FuncLoc:
                 self.name = instr_string[:-1]
         except:
             sys.exit("Unable to parse \"" + original_string + "\" into its components! Should be something like \"75 function:\" or \"subroutine:\".")
-        print(self)
-    
+
+   
     def __str__(self):
         return f"Function Location Name: {self.name}, pc: {self.pc}"
