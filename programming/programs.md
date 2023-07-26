@@ -23,3 +23,4 @@ Sends 64 bytes total (32 addresses) to the serial UART connection tx line. Can b
 
 ### send_receive_test.txt
 While the letter "A" is displayed on 7-segment display, is waiting to receive the characters "ab" over UART. Once this occurs, it will send the alphabet over UART, then go back to the start (waiting to receive "ab" over UART while displaying "A").
+When creating this program, I discovered that loading from and storing to a memory address that holds an instruction rather than data is possible, but the instruction has to be within 256 addresses in front of the load/store instruction 

@@ -72,7 +72,8 @@ instr_to_update:
 UART_input: .word 0 7
 
 # value that UART will be compared against
-UART_input_comparison: .word "ab" 8
+# is equivalent to ascii code of "w"
+UART_input_comparison: .word 119 8
 
 # stores the inital value of instr_to_update (tx UART_DB_0)
 instr_to_update_base: .word b1111000010010110 146
