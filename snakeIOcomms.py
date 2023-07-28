@@ -35,7 +35,9 @@ baudrate = 115200
 # open serial port, after 0.05 seconds will timout the attempted serial read
 ser = serial.Serial(port, baudrate, timeout=0.1)
 
-# reading 128 bytes (64 good bytes and 64 junk bytes) at 115200 baud rate takes 0.008888888 seconds
+# specify the frames per sec you want the snake game to run at. This is also how often inputs are sampled
+frames_per_sec = 2
+
 break_cond = 0
 
 # INPUT/OUTPUT LOOP
@@ -79,22 +81,12 @@ while running:
         # print("no key pressed...")
         ser.write(b'\x00\x00')
 
-    # time to get keypress events
-    elapsed_time = time.time() - start_time
-    print(f"Time to get keypress events: {elapsed_time:.5f} seconds")
-    start_time = time.time()
-
     # read all of the display data at once (64 bytes)
     data = ser.read(64)
 
     # if data is read over uart, update display, else don't bother (for now)
     if not data:
         continue
-
-    # time to read data over uart
-    elapsed_time = time.time() - start_time
-    print(f"Time to read data over UART: {elapsed_time:.5f} seconds")
-    start_time = time.time()
 
     # Reshape the 64-byte array into a 16x32 2D array of 0s and 1s (column-major order)
     array_2d = [[(data[j*4 + i//8] >> (7 - i%8)) & 1 for j in range(16)] for i in range(32)]
@@ -119,6 +111,8 @@ while running:
     window.refresh()
 
     elapsed_time = time.time() - start_time
+    while elapsed_time < (1 / frames_per_sec):
+        elapsed_time = time.time() - start_time
     print(f"Time create pixel array and refresh window: {elapsed_time:.5f} seconds")
 
     if break_cond:

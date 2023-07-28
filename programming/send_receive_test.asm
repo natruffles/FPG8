@@ -78,13 +78,13 @@ UART_input_comparison: .word 119 8
 # stores the inital value of instr_to_update (tx UART_DB_0)
 instr_to_update_base: .word b1111000010010110 146
 # always stores 0, located at address 146
-nothin: .word 0 147
+nothin: .word 0 
 # pointer to start address in the display buffer below
 # initialized to value 150 (start address of disp buffer), at address 147
-UART_start_pointer: .word 150 148
+UART_start_pointer: .word 150 
 # pointer to 1 past the end address in the display buffer below
 # initialized to value 182 (1 past the last address of disp buffer), at address 148
-UART_end_pointer: .word 182 149
+UART_end_pointer: .word 182 
 # UART display buffer, 32 values always sent over uart in a row, addresses 150-181 inclusive
 # make sure the start address is ALWAYS < 256
 UART_DB_0: .word "ab"
