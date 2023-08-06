@@ -380,3 +380,17 @@ Example ```offset_long``` data declarations:
 Putting everything together, you can check out ```programs\test.asm``` to view a sample working assembly program.
 
 Currently, my assembler takes a .asm file and prints to the python console each instruction object, data object, and function location object to the terminal, but does not yet generate a binary file.
+
+## Update 8/6/2023
+I have completed my custom assembler for the time being. It is now able to successfully generate a binary text file from my custom assembly source code.
+
+To speed up my workflow, I created a windows command line script titled ```run.cmd``` that encodes my assembly file into binary, moves the binary file to the correct file location to load to the FPGA, loads the binary file to the FPGA's RAM, and simulates the results using GTKWave.
+
+I also have figured out how to communicate with I/O devices from my FPGA using the UART serial protocol. Using a python script that runs on my laptop titled ```snakeIOcomms.py```, I can send keyboard inputs and receive a bitstream of 64 bytes from my FPGA, both using the UART serial communication protocol. The bitstream received from my FPGA I can use to simulate a 32x16 black and white display, much like old serial monitors of the past. 
+
+Currently, my assembly program waits to receive the character "w" from keyboard input, and once that occurs, sends a bitstream of 64 bytes that causes my simulated display to show the letters "SNAKE!". [This website](https://www.dcode.fr/binary-image) proved very handy to convert the black and white image that I wanted to display to binary that I could specify in my assembly code.
+
+Looking forward to the next update, where I will have some snake gameplay working.
+
+Pictured below is an example of the title screen for my upcoming snake game. The window uses the [PySDL2 library](https://pysdl2.readthedocs.io/en/rel_0_9_7/index.html) to render a 32x16 black-and-white display:
+![](https://github.com/natruffles/FPG8/blob/main/images/title_screen.jpg?raw=true)

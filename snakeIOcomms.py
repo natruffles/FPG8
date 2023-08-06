@@ -116,6 +116,6 @@ while running:
     print(f"Time create pixel array and refresh window: {elapsed_time:.5f} seconds")
 
     if break_cond:
-        break
+        pass
 
 sdl2.ext.quit()

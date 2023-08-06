@@ -145,7 +145,7 @@ class AsmInstF1:
                                 self.offset = data.data_address - self.pc  # such that PC + offset will reach the data address
                             else: # if ldi instruction, just load the data address into offset field
                                 print("WARNING: Loading word into offset field, make sure value is within bounds to prevent overflow!")
-                                self.offset = data.data_address
+                                self.offset = data.value
                             found_flag = 1
                         else:
                             sys.exit("\"" + original_instr + "\": Cannot reference an offset long datatype!")
